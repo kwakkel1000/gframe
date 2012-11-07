@@ -34,7 +34,7 @@
 #include <vector>
 
 std::string VERSION = __GIT_VERSION;
-std::string NAME = "undefined";
+std::string NAME = "gframe";
 
 mainbase::mainbase()
 {
