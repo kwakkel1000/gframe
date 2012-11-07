@@ -1,5 +1,6 @@
+GIT_VERSION = $(shell sh -c 'git describe --abbrev=4 --dirty --always')
 CC = g++
-CFLAGS = -pipe -O0#n for nondebug
+CFLAGS = -D__GIT_VERSION=\"$(GIT_VERSION)\" -pipe -O0#n for nondebug
 CXXFLAGS = $(CFLAGS) -Wall -g #-g << debugging
 BOOSTLIBS = -lboost_thread #depends on arch	linux
 MYSQLLIBS = -lmysqlclient

@@ -33,7 +33,7 @@
 #include <iostream>
 #include <vector>
 
-std::string VERSION = "0.0.0";
+std::string VERSION = __GIT_VERSION;
 std::string NAME = "undefined";
 
 mainbase::mainbase()
