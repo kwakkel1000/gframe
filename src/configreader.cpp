@@ -115,6 +115,8 @@ bool configreader::readFile(std::string _ConfigFile)
                             boost::trim(value);
 
                             // cout << "* The variable '" << var << "' has value '" << value << "'" << endl;
+                            // convert var to lower;
+                            boost::algorithm::to_lower(var);
                             settings[var] = value;
                         }
                     }
@@ -136,6 +138,8 @@ bool configreader::readFile(std::string _ConfigFile)
 
 std::string configreader::getString(std::string varname)
 {
+    // values are saved lowercase, so convert varname to lower first.
+    boost::algorithm::to_lower(varname);
     return settings[varname];
 }
 
