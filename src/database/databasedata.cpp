@@ -34,7 +34,7 @@
 
 databasedata::databasedata()
 {
-    wait_time = 6;
+    wait_time = 300;
 }
 
 databasedata::~databasedata()
