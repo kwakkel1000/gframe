@@ -52,24 +52,33 @@ mysqldatabase::mysqldatabase()
 * Precondition: host, database, user name and password
 * Postcondition: connected to that database
 **************/
-int mysqldatabase::connect(const char *host, const char *db, const char *user, const char *pass)
+//int mysqldatabase::connect(const char *host, const char *db, const char *user, const char *pass)
+int mysqldatabase::connect(std::vector<const char*> Arguments)
 {
-    if (sock) // already connected to another database
-        disconnect(); // disconnect from that one
+    if (Arguments.size() == 4)
+    {
+        const char *host = Arguments[0];
+        const char *db = Arguments[1];
+        const char *user = Arguments[2];
+        const char *pass = Arguments[3];
+        if (sock) // already connected to another database
+            disconnect(); // disconnect from that one
 
-    // initilize the socket
-    sock = mysql_init(0);
+        // initilize the socket
+        sock = mysql_init(0);
 
-    // something went wrong with the socket
-    if (!sock)
-        return ERR201;
+        // something went wrong with the socket
+        if (!sock)
+            return ERR201;
 
-    // try connecting to the database
-    if (!mysql_real_connect(sock, host, user, pass, db, 0, NULL, 0))
-        return ERR202;
+        // try connecting to the database
+        if (!mysql_real_connect(sock, host, user, pass, db, 0, NULL, 0))
+            return ERR202;
 
-    // successfully connected to the database
-    return SUCCESS;
+        // successfully connected to the database
+        return SUCCESS;
+    }
+    return 0;
 }
 
 /**************

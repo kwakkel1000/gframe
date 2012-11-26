@@ -26,6 +26,9 @@
 #ifndef SRC_INCLUDE_OUTPUT_H
 #define SRC_INCLUDE_OUTPUT_H
 
+#include <mutex>
+#include <thread>
+
 #include <string>
 
 #include <fstream>
@@ -61,6 +64,9 @@ class output
 
         std::string sLogFile;
         std::ofstream fLogFile;
+
+        std::mutex m_outputMutex;
+        std::mutex m_logMutex;
 };
 
 #endif // SRC_INCLUDE_OUTPUT_H_

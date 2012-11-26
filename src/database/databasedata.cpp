@@ -49,11 +49,12 @@ databasedata::~databasedata()
     std::cout << "databasedata::~databasedata() m_CounterThread->join();" << std::endl;
     m_CounterThread->join();
     std::cout << "databasedata::~databasedata() delete m_db;" << std::endl;
-    delete m_db;
+    //delete m_db;
 }
 
 void databasedata::init(database* db, std::string hostname, std::string databasename, std::string username, std::string password)
 {
+    std::lock_guard<std::mutex> settingslock(m_SettingsMutex);
     m_db = db;
     m_HostName = hostname;
     m_DatabaseName = databasename;
@@ -69,6 +70,7 @@ void databasedata::init(database* db, std::string hostname, std::string database
 }
 void databasedata::init(database* db, std::string filename)
 {
+    std::lock_guard<std::mutex> settingslock(m_SettingsMutex);
     m_db = db;
     m_FileName = filename;
     m_Run = true;
@@ -230,18 +232,16 @@ void databasedata::add_sql_queue(std::string query)
 
 void databasedata::query_run()
 {
+    //std::lock_guard<std::mutex> settingslock(m_SettingsMutex);
     while (!m_Run)
     {
-        //usleep(100000);
-        std::chrono::milliseconds dura( 100000 );
-        std::this_thread::sleep_for( dura );
+        std::this_thread::sleep_for( std::chrono::seconds(1) );
     }
     std::cout << "QueryRun started" << std::endl;
     while (m_Run)
     {
-        //std::lock_guard<std::mutex> lock1(m_SqlMutex);
+        // function below locks (lock1.lock());
         std::unique_lock<std::mutex> lock1(m_SqlMutex);
-        lock1.lock();
         while (sql_queue.empty() && m_Run)
         {
             std::cout << "databasedata::query_run m_SqlAvailable.wait(lock1);" << std::endl;
@@ -250,7 +250,18 @@ void databasedata::query_run()
         while (!m_db->connected())
         {
             std::cout << "open connection" << std::endl;
-            state = m_db->connect(m_HostName.c_str(), m_DatabaseName.c_str(), m_UserName.c_str(), m_Pass.c_str());
+            std::vector<const char *> Arguments;
+            Arguments.clear();
+            Arguments.push_back(m_HostName.c_str());
+            Arguments.push_back(m_DatabaseName.c_str());
+            Arguments.push_back(m_UserName.c_str());
+            Arguments.push_back(m_Pass.c_str());
+            state = m_db->connect(Arguments);
+            if (state == 0)
+            {
+                std::cout << "wrong amount of arguments, 4 needed (hostname, databasename, username, password)" << std::endl;
+                exit (0);
+            }
         }
         if (state == 200 && m_db->connected())
         {
@@ -275,7 +286,7 @@ void databasedata::query_run()
                 {
                     /*std::mutex::lock_guard lock(m_CounterMutex);
                     counter = 0;*/
-                    m_CounterAvailableCondition.notify_one();/**/
+                    m_CounterAvailableCondition.notify_one();
                 }
             }
         }
@@ -295,17 +306,15 @@ void databasedata::db_timer()
             if (time (NULL) - m_last_query_time >= wait_time)
             {
                 //std::lock_guard<std::mutex> lock(m_CounterMutex);
-                std::unique_lock<std::mutex> lock(m_CounterMutex);
-                lock.lock();
+                std::unique_lock<std::mutex> db_timer_lock(m_CounterMutex);
                 std::cout << "connection closed" << std::endl;
                 m_db->disconnect();
-                m_CounterAvailableCondition.wait(lock);
-                lock.unlock();
+                m_CounterAvailableCondition.wait(db_timer_lock);
+                db_timer_lock.unlock();
             }
         }
         //usleep(1000000);
-        std::chrono::milliseconds dura( 1000000 );
-        std::this_thread::sleep_for( dura );
+        std::this_thread::sleep_for( std::chrono::seconds(1) );
         /*while (counter < wait_time && m_Run)
         {
             usleep(1000000);
@@ -337,7 +346,13 @@ std::vector< std::vector< std::string > > databasedata::raw_sql(std::string quer
     while (!m_db->connected())
     {
         //std::cout << "open connection" << std::endl;
-        state = m_db->connect(m_HostName.c_str(), m_DatabaseName.c_str(), m_UserName.c_str(), m_Pass.c_str());
+        std::vector<const char *> Arguments;
+        Arguments.push_back(m_HostName.c_str());
+        Arguments.push_back(m_DatabaseName.c_str());
+        Arguments.push_back(m_UserName.c_str());
+        Arguments.push_back(m_Pass.c_str());
+        //state = m_db->connect(m_HostName.c_str(), m_DatabaseName.c_str(), m_UserName.c_str(), m_Pass.c_str());
+        state = m_db->connect(Arguments);
     }
     if (state == 200 && m_db->connected())
     {

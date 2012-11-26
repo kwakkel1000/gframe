@@ -38,9 +38,10 @@
 class database
 {
     public:
-        virtual ~database()=0;
-        virtual int connect(const char *host, const char *db, const char *user, const char *pass);
-        virtual int connect(const char* filename);
+        virtual ~database(){};
+        //virtual int connect(const char *host, const char *db, const char *user, const char *pass);
+        //virtual int connect(const char* filename);
+        virtual int connect(std::vector<const char*>)=0;
         virtual bool disconnect()=0;
         virtual bool connected()=0;
 

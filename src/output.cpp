@@ -34,10 +34,14 @@
 
 void output::setDebugLevel(int iLevel)
 {
+    std::mutex setdebugmutex;
+    std::lock_guard<std::mutex> setdebuglock(setdebugmutex);
     iOutputLevel = iLevel;
 }
 void output::setLogFile(std::string msLogFile)
 {
+    std::mutex setlogmutex;
+    std::lock_guard<std::mutex> setloglock(setlogmutex);
     sLogFile = msLogFile;
 }
 
@@ -65,6 +69,7 @@ void output::addOutput(std::string sOutput)
 
 void output::addOutput(std::string sOutput, int iLevel)
 {
+    std::lock_guard<std::mutex> outputlock(m_outputMutex);
     if (iLevel <= iOutputLevel)
     {
         std::cout << "\033[1m\033[34m[\033[33m ** \033[34m] [\033[32m" << lib::stringFromInt(iLevel) << "\033[34m] \033[0m" << sOutput << std::endl;
@@ -79,6 +84,7 @@ void output::appendLog(std::string sOutput)
 
 void output::appendLog(std::string sOutput, int iLevel)
 {
+    std::lock_guard<std::mutex> loglock(m_logMutex);
     if (sLogFile != "")
     {
         if (iLevel <= iLogLevel)

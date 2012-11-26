@@ -112,6 +112,7 @@ class databasedata
         std::condition_variable m_CounterAvailableCondition;
         std::mutex m_SqlMutex;
         std::mutex m_CounterMutex;
+        std::mutex m_SettingsMutex;
 
         // functions
         void add_sql_queue(std::string query);

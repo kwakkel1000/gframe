@@ -34,15 +34,16 @@
 #include <vector>
 
 // Meh! I changed all the char* to const char* but it would be easier if they where std::string's
-class mysqldatabase : public database
+class mysqldatabase : public virtual database
 {
     public:
         // class constructor
         mysqldatabase();
-        virtual ~mysqldatabase();
+        ~mysqldatabase(){};
 
         // connection & disconnect
-        int connect(const char *host, const char *db, const char *user, const char *pass); // connect to the database
+        //int connect(const char *host, const char *db, const char *user, const char *pass); // connect to the database
+        int connect(std::vector<const char*>); // connect to the database
         bool disconnect(); // disconnect from the database
         bool connected();
 
