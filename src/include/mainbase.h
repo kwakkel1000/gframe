@@ -58,6 +58,7 @@ class mainbase
 
     private:
         bool isRoot();
+        bool dropRoot();
 
         bool readPidFile();
         void writePidFile(int Pid);
@@ -66,7 +67,10 @@ class mainbase
 
         bool m_Forever;
         bool m_INeedRoot;
+        bool m_DropRoot;
         bool m_Foreground;
+        std::string m_Uid;
+        std::string m_Gid;
         std::string m_Name;
         std::string m_Version;
         std::string m_LogFileLocation;

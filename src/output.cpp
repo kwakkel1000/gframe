@@ -86,7 +86,6 @@ void output::appendLog(std::string sOutput, int iLevel)
             fLogFile << "[" << sFormatTime("%d-%m-%Y %H:%M:%S") << "] [" << lib::stringFromInt(iLevel) << "] " << sOutput << std::endl;
         }
     }
-
 }
 
 std::string output::sFormatTime(std::string sFormat)

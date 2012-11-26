@@ -32,6 +32,8 @@
 #include <cstring>
 #include <iostream>
 #include <vector>
+#include <grp.h>
+#include <pwd.h>
 
 std::string VERSION = __GIT_VERSION;
 std::string NAME = "gframe";
@@ -43,6 +45,7 @@ mainbase::mainbase()
 void mainbase::init()
 {
     m_INeedRoot = false;
+    m_DropRoot = false;
     m_Foreground = false;
     m_Name = NAME;
     m_Version = VERSION;
@@ -58,12 +61,13 @@ void mainbase::init()
     addHelpItem("\t-h, --help List options");
     addHelpItem("\t-v, --version Output version and exit");
     addHelpItem("\t-f, --foreground Don't fork into the background");
+    addHelpItem("\t-dr, --droproot [username] [group] run as");
     addHelpItem("\t-c, --config Set config file (default: " + m_IniFile + ")");
     addHelpItem("\t-d, --debug Set debug level [1-10] (default: 5)");
     addHelpItem("\t-p, --pid Set Pid file location (default: " + m_PidFileLocation + ")");
     addHelpItem("\t-l, --log Set log file location (default: " + m_LogFileLocation + ")");
     addHelpItem("\t-n, --name Set name for pid/log files (default: " + m_Name + ")");
-    addHelpItem("\t--INeedRootPowerz Requered when running as root");
+    addHelpItem("\t--INeedRootPowerz Requered when running as root (not needed when droproot is specified)");
 }
 
 void mainbase::parseArgs(std::vector<std::string> args)
@@ -75,54 +79,76 @@ void mainbase::parseArgs(std::vector<std::string> args)
             showHelp();
             exit(EXIT_SUCCESS);
         }
-        if (args[nArg] == "--version" || args[nArg] == "-v")
+        else if (args[nArg] == "--version" || args[nArg] == "-v")
         {
             std::cout << m_Name << " " << m_Version << std::endl;
             exit(EXIT_SUCCESS);
         }
-        if (args[nArg] == "--foreground" || args[nArg] == "-f")
+        else if (args[nArg] == "--foreground" || args[nArg] == "-f")
         {
             m_Foreground = true;
         }
-        if (args[nArg] == "--config" || args[nArg] == "-c")
+        else if (args[nArg] == "--droproot" || args[nArg] == "-dr")
         {
-            if ((nArg+1) < args.size())
+            if ((++nArg) < args.size())
             {
-                m_IniFile = args[nArg+1];
+                if ((++nArg) < args.size())
+                {
+                    m_Uid = args[nArg-1];
+                    m_Gid = args[nArg];
+                    m_DropRoot = true;
+                }
             }
         }
-        if (args[nArg] == "--debug" || args[nArg] == "-d")
+        else if (args[nArg] == "--config" || args[nArg] == "-c")
         {
-            if ((nArg+1) < args.size())
+            //if ((nArg+1) < args.size())
+            if ((++nArg) < args.size())
+            {
+                //m_IniFile = args[nArg+1];
+                m_IniFile = args[nArg];
+            }
+        }
+        else if (args[nArg] == "--debug" || args[nArg] == "-d")
+        {
+            //if ((nArg+1) < args.size())
+            if ((++nArg) < args.size())
             {
                 int i;
-                std::stringstream ss(args[nArg+1]);
+                //std::stringstream ss(args[nArg+1]);
+                std::stringstream ss(args[nArg]);
                 ss >> i;
                 output::instance().setDebugLevel(i);
             }
         }
-        if (args[nArg] == "--pid" || args[nArg] == "-p")
+        else if (args[nArg] == "--pid" || args[nArg] == "-p")
         {
-            if ((nArg+1) < args.size())
+            //if ((nArg+1) < args.size())
+            if ((++nArg) < args.size())
             {
-                m_PidFileLocation = args[nArg+1];
+                //m_PidFileLocation = args[nArg+1];
+                m_PidFileLocation = args[nArg];
             }
         }
-        if (args[nArg] == "--log" || args[nArg] == "-l")
+        else if (args[nArg] == "--log" || args[nArg] == "-l")
         {
-            if ((nArg+1) < args.size())
+            //if ((nArg+1) < args.size())
+            if ((++nArg) < args.size())
             {
-                m_LogFileLocation = args[nArg+1];
+                //m_LogFileLocation = args[nArg+1];
+                m_LogFileLocation = args[nArg];
             }
         }
-        if (args[nArg] == "--name" || args[nArg] == "-n")
+        else if (args[nArg] == "--name" || args[nArg] == "-n")
         {
-            if ((nArg+1) < args.size())
+            //if ((nArg+1) < args.size())
+            if ((++nArg) < args.size())
             {
-                m_Name = args[nArg+1];
+                //m_Name = args[nArg+1];
+                m_Name = args[nArg];
             }
         }
-        if (args[nArg] == "--INeedRootPowerz")
+        else if (args[nArg] == "--INeedRootPowerz")
         {
             m_INeedRoot = true;
         }
@@ -136,9 +162,7 @@ int mainbase::run()
     {
         return 1;
     }
-    output::instance().setLogFile(m_LogFile);
-    output::instance().init();
-    if (isRoot())
+    if (isRoot() && !m_DropRoot)
     {
         fprintf(stdout, "Your are running %s as root!\n", m_Name.c_str());
         fprintf(stdout, "this is dangerouse and can cause great damage!\n");
@@ -150,7 +174,12 @@ int mainbase::run()
         fprintf(stdout, "%s will start in 15 seconds.\n", m_Name.c_str());
         sleep(15);
     }
-
+    if (m_DropRoot)
+    {
+        return dropRoot();
+    }
+    output::instance().setLogFile(m_LogFile);
+    output::instance().init();
     int DaemonizeStatus = daemonize(!m_Foreground);
     if (DaemonizeStatus != -1)
     {
@@ -225,8 +254,68 @@ void mainbase::writePidFile(int Pid)
 
 bool mainbase::isRoot()
 {
+# if defined(_WIN32) || defined(__WIN32__) || defined(WIN32) || defined(__CYGWIN__)
     // User root? If one of these were root, we could switch the others to root, too
     return (geteuid() == 0 || getuid() == 0);
+# else
+    return false;
+# endif
+}
+
+bool mainbase::dropRoot()
+{
+    int u, eu, g, eg, sg;
+    struct passwd *pUser = getpwnam(m_Uid.c_str());
+    struct group *pGroup = getgrnam(m_Gid.c_str());
+    if (!pUser)
+    {
+        std::cout << "User not found" << std::endl;
+        return false;
+    }
+    else if (!pGroup)
+    {
+        std::cout << "Group not found" << std::endl;
+        return false;
+    }
+    else
+    {
+        int gid = pGroup->gr_gid;
+        int uid = pUser->pw_uid;
+        if (gid == 0 || uid == 0)
+        {
+            std::cout << "Cannot run as root" << std::endl;
+            return false;
+        }
+        else
+        {
+            if ((geteuid() == 0) || (getuid() == 0) || (getegid() == 0) || (getgid()== 0))
+            {
+                sg = setgroups(0, NULL);
+                if (sg < 0)
+                {
+                    std::cout << "Could not remove supplementary groups!" << std::endl;
+                    return false;
+                }
+                g = setgid(pGroup->gr_gid);
+                eg = setegid(pGroup->gr_gid);
+                if ((g < 0) || (eg < 0))
+                {
+                    std::cout << "Could not switch group id!" << std::endl;
+                    return false;
+                }
+                u = setuid(pUser->pw_uid);
+                eu = seteuid(pUser->pw_uid);
+                if ((u < 0) || (eu < 0))
+                {
+                    std::cout << "Could not switch user id!" << std::endl;
+                    return false;
+                }
+            }
+            return true;
+        }
+        return true;
+    }
+    return true;
 }
 
 void mainbase::showHelp()
