@@ -174,16 +174,20 @@ int mainbase::run()
         fprintf(stdout, "%s will start in 15 seconds.\n", m_Name.c_str());
         sleep(15);
     }
-    if (m_DropRoot)
-    {
-        return dropRoot();
-    }
     output::instance().setLogFile(m_LogFile);
     output::instance().init();
     int DaemonizeStatus = daemonize(!m_Foreground);
     if (DaemonizeStatus != -1)
     {
         return DaemonizeStatus;
+    }
+    if (m_DropRoot)
+    {
+        fprintf(stdout, "dropping root\n");
+        if (!dropRoot())
+        {
+            return 1;
+        }
     }
     if(!configreader::instance().readFile(m_IniFile))
     {
