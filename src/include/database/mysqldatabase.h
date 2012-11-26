@@ -39,6 +39,7 @@ class mysqldatabase : public database
     public:
         // class constructor
         mysqldatabase();
+        virtual ~mysqldatabase();
 
         // connection & disconnect
         int connect(const char *host, const char *db, const char *user, const char *pass); // connect to the database
