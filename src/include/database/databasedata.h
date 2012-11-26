@@ -26,11 +26,24 @@
 #ifndef SRC_INCLUDE_DATABASE_DATABASEDATA_H
 #define SRC_INCLUDE_DATABASE_DATABASEDATA_H
 
+/*
 #include <boost/bind.hpp>
 #include <boost/thread/condition.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/shared_ptr.hpp>
+*/
+/*
+#include <boost/bind.hpp>
+#include <boost/thread/condition.hpp>
+#include <boost/thread/thread.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/shared_ptr.hpp>
+*/
+#include <mutex>
+#include <memory>
+#include <thread>
+#include <condition_variable>
 
 //#include "database.h"
 #include <gframe/database/database.h>
@@ -85,12 +98,20 @@ class databasedata
         std::string m_Pass;
 
         // thread vars
+        /*
         boost::shared_ptr< boost::thread > m_QueryThread;
         boost::shared_ptr< boost::thread > m_CounterThread;
         boost::condition m_SqlAvailable;
         boost::condition m_CounterAvailableCondition;
         boost::mutex m_SqlMutex;
         boost::mutex m_CounterMutex;
+        */
+        std::shared_ptr< std::thread > m_QueryThread;
+        std::shared_ptr< std::thread > m_CounterThread;
+        std::condition_variable m_SqlAvailable;
+        std::condition_variable m_CounterAvailableCondition;
+        std::mutex m_SqlMutex;
+        std::mutex m_CounterMutex;
 
         // functions
         void add_sql_queue(std::string query);

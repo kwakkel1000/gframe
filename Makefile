@@ -1,8 +1,8 @@
 GIT_VERSION = $(shell sh -c 'git describe --abbrev=4 --dirty --always')
 CC = g++
-CFLAGS = -D__GIT_VERSION=\"$(GIT_VERSION)\" -pipe -O0#n for nondebug
+CFLAGS = -D__GIT_VERSION=\"$(GIT_VERSION)\" -pipe -std=c++11 -O0#n for nondebug
 CXXFLAGS = $(CFLAGS) -Wall -g #-g << debugging
-BOOSTLIBS = -lboost_thread #depends on arch	linux
+#BOOSTLIBS = -lboost_thread #depends on arch	linux
 MYSQLLIBS = -lmysqlclient
 LIBS = -ldl
 INC=-I./src/
@@ -53,7 +53,7 @@ $(GFRAMEOUTPUT): $(GFRAMEOBJECTS)
 $(DATABSEOUTPUT): $(DATABASEOBJECTS)
 	mkdir -p $(LIB_DIR)database/
 	cp $(HEADER_DIR)database/*.h $(LIB_DIR)database/
-	$(CC) $(CXXFLAGS) -shared -Wl,-soname,$@.1 -o $(LIB_DIR)$@.1.0 $(DATABASEOBJECTS) $(BOOSTLIBS) $(MYSQLLIBS)
+	$(CC) $(CXXFLAGS) -shared -Wl,-soname,$@.1 -o $(LIB_DIR)$@.1.0 $(DATABASEOBJECTS) $(MYSQLLIBS)
 	ln -sf $(DATABSEOUTPUT).1.0 $(LIB_DIR)$(DATABSEOUTPUT)
 	ln -sf $(DATABSEOUTPUT).1.0 $(LIB_DIR)$(DATABSEOUTPUT).1
 

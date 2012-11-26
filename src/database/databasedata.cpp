@@ -25,7 +25,8 @@
 //#include "../include/database/databasedata.h"
 #include <gframe/database/databasedata.h>
 
-#include <boost/algorithm/string.hpp>
+//#include <boost/algorithm/string.hpp>
+#include <chrono>
 
 #include <iostream>
 #include <sstream>
@@ -59,20 +60,24 @@ void databasedata::init(database* db, std::string hostname, std::string database
     m_UserName = username;
     m_Pass = password;
     m_Run = true;
-    assert(!m_CounterThread);
-    m_CounterThread = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&databasedata::db_timer, this)));
-    assert(!m_QueryThread);
-    m_QueryThread = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&databasedata::query_run, this)));
+    //m_CounterThread(db_timer);
+    //m_QueryThread(query_run);
+    //assert(!m_CounterThread);
+    m_CounterThread = std::shared_ptr<std::thread>(new std::thread(std::bind(&databasedata::db_timer, this)));
+    //assert(!m_QueryThread);
+    m_QueryThread = std::shared_ptr<std::thread>(new std::thread(std::bind(&databasedata::query_run, this)));
 }
 void databasedata::init(database* db, std::string filename)
 {
     m_db = db;
     m_FileName = filename;
     m_Run = true;
-    assert(!m_CounterThread);
-    m_CounterThread = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&databasedata::db_timer, this)));
-    assert(!m_QueryThread);
-    m_QueryThread = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&databasedata::query_run, this)));
+    //m_CounterThread(databasedata::db_timer);
+    //m_QueryThread(databasedata::query_run);
+    //assert(!m_CounterThread);
+    m_CounterThread = std::shared_ptr<std::thread>(new std::thread(std::bind(&databasedata::db_timer, this)));
+    //assert(!m_QueryThread);
+    m_QueryThread = std::shared_ptr<std::thread>(new std::thread(std::bind(&databasedata::query_run, this)));
 }
 
 
@@ -217,7 +222,7 @@ bool databasedata::update(std::string msWhere, std::vector< std::string > mvKeys
 void databasedata::add_sql_queue(std::string query)
 {
     //std::cout << query << std::endl;
-    boost::mutex::scoped_lock lock(m_SqlMutex);
+    std::lock_guard<std::mutex> lock(m_SqlMutex);
     sql_queue.push(query);
     std::cout << "databasedata::add_sql_queue m_SqlAvailable.notify_one();" << std::endl;
     m_SqlAvailable.notify_one();
@@ -227,16 +232,20 @@ void databasedata::query_run()
 {
     while (!m_Run)
     {
-        usleep(100000);
+        //usleep(100000);
+        std::chrono::milliseconds dura( 100000 );
+        std::this_thread::sleep_for( dura );
     }
     std::cout << "QueryRun started" << std::endl;
     while (m_Run)
     {
-        boost::mutex::scoped_lock lock(m_SqlMutex);
+        //std::lock_guard<std::mutex> lock1(m_SqlMutex);
+        std::unique_lock<std::mutex> lock1(m_SqlMutex);
+        lock1.lock();
         while (sql_queue.empty() && m_Run)
         {
-            std::cout << "databasedata::query_run m_SqlAvailable.wait(lock);" << std::endl;
-            m_SqlAvailable.wait(lock);
+            std::cout << "databasedata::query_run m_SqlAvailable.wait(lock1);" << std::endl;
+            m_SqlAvailable.wait(lock1);
         }
         while (!m_db->connected())
         {
@@ -253,7 +262,7 @@ void databasedata::query_run()
                 {
                     std::cout << temp << std::endl;
                     m_db->set(temp.c_str());
-                    boost::mutex::scoped_lock lock(m_CounterMutex);
+                    std::lock_guard<std::mutex> lock2(m_CounterMutex);
                     m_last_query_time = time (NULL);
                 }
                 else
@@ -264,12 +273,13 @@ void databasedata::query_run()
             if (sql_queue.empty() && m_Run)
             {
                 {
-                    /*boost::mutex::scoped_lock lock(m_CounterMutex);
+                    /*std::mutex::lock_guard lock(m_CounterMutex);
                     counter = 0;*/
                     m_CounterAvailableCondition.notify_one();/**/
                 }
             }
         }
+        lock1.unlock();
     }
     /*if (m_db)
     {
@@ -284,23 +294,28 @@ void databasedata::db_timer()
         {
             if (time (NULL) - m_last_query_time >= wait_time)
             {
-                boost::mutex::scoped_lock lock(m_CounterMutex);
+                //std::lock_guard<std::mutex> lock(m_CounterMutex);
+                std::unique_lock<std::mutex> lock(m_CounterMutex);
+                lock.lock();
                 std::cout << "connection closed" << std::endl;
                 m_db->disconnect();
                 m_CounterAvailableCondition.wait(lock);
+                lock.unlock();
             }
         }
-        usleep(1000000);
+        //usleep(1000000);
+        std::chrono::milliseconds dura( 1000000 );
+        std::this_thread::sleep_for( dura );
         /*while (counter < wait_time && m_Run)
         {
             usleep(1000000);
             {
-                //boost::mutex::scoped_lock lock(m_CounterMutex);
+                //std::mutex::scoped_lock lock(m_CounterMutex);
                 counter++;
             }
         }
         // mutex?
-        boost::mutex::scoped_lock lock(m_CounterMutex);
+        std::mutex::scoped_lock lock(m_CounterMutex);
         if (counter == wait_time && m_db->connected())
         {
             std::cout << "connection closed" << std::endl;
@@ -317,7 +332,7 @@ void databasedata::db_timer()
 
 std::vector< std::vector< std::string > > databasedata::raw_sql(std::string query)
 {
-    boost::mutex::scoped_lock lock(m_SqlMutex);
+    std::lock_guard<std::mutex> lock1(m_SqlMutex);
     std::vector< std::vector< std::string > > sql_result;
     while (!m_db->connected())
     {
@@ -327,12 +342,12 @@ std::vector< std::vector< std::string > > databasedata::raw_sql(std::string quer
     if (state == 200 && m_db->connected())
     {
         sql_result = m_db->get(query.c_str());
-        boost::mutex::scoped_lock lock(m_CounterMutex);
+        std::lock_guard<std::mutex> lock2(m_CounterMutex);
         m_last_query_time = time (NULL);
         if (sql_queue.empty() && m_Run)
         {
             {
-                /*boost::mutex::scoped_lock lock(m_CounterMutex);
+                /*std::mutex::scoped_lock lock(m_CounterMutex);
                 counter = 0;*/
                 m_CounterAvailableCondition.notify_one();/**/
             }

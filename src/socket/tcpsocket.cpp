@@ -186,6 +186,7 @@ int tcpsocket::recv ( std::string& data ) const
 //        data += std::string(buffer);
 //    }*/
 //    return 1;
+    return 1;
 }
 
 void tcpsocket::init_listen()
@@ -237,8 +238,8 @@ int tcpsocket::select_listen(std::string& data, int& nclient)
         if (rval == -1)
         {
             (void) inet_ntop(m_addr.sin6_family, m_addr.sin6_addr.s6_addr, buf, BUFLEN);
-            (void) snprintf(s, BUFLEN, "V6 Accept failed for %s %d\0",
-            buf, m_addr.sin6_port);
+            //(void) snprintf(s, BUFLEN, "V6 Accept failed for %s %d\0", buf, m_addr.sin6_port);
+            (void) snprintf(s, BUFLEN, "V6 Accept failed for %s %d", buf, m_addr.sin6_port);
             perror(s);
         }
         else
@@ -255,12 +256,11 @@ int tcpsocket::select_listen(std::string& data, int& nclient)
                 /* Add client to list of clients */
                 clients[nclients++] = rval;
                 if (rval > maxfd) maxfd = rval;
-                (void) inet_ntop(m_addr.sin6_family, m_addr.sin6_addr.s6_addr,
-                        buf, BUFLEN);
+                (void) inet_ntop(m_addr.sin6_family, m_addr.sin6_addr.s6_addr, buf, BUFLEN);
                 snprintf(s, BUFLEN, "Accepted V6 connection from %s %d as %d\n",
                 buf, m_addr.sin6_port, rval);
-                snprintf(s, BUFLEN, "You are client %d [%d]. You are now connected.\n\0",
-                nclients, rval);
+                //snprintf(s, BUFLEN, "You are client %d [%d]. You are now connected.\n\0", nclients, rval);
+                snprintf(s, BUFLEN, "You are client %d [%d]. You are now connected.\n", nclients, rval);
                 ::send(rval, s, strnlen(s, BUFLEN), MSG_DONTWAIT);
             }
         }
@@ -279,14 +279,14 @@ int tcpsocket::select_listen(std::string& data, int& nclient)
             /* Read from client */
             if ((rval = ::recv(clients[nclients_iterator], buf, BUFLEN-1, MSG_DONTWAIT)) < 1)
             {
-                snprintf(s, BUFLEN, "Short recv %d octets from %d [%d]\0",  rval,
-                nclients_iterator, clients[nclients_iterator]);
+                //snprintf(s, BUFLEN, "Short recv %d octets from %d [%d]\0",  rval, nclients_iterator, clients[nclients_iterator]);
+                snprintf(s, BUFLEN, "Short recv %d octets from %d [%d]",  rval, nclients_iterator, clients[nclients_iterator]);
                 perror(s);
                 /* Treat a 0 byte receive as an exception */
                 FD_SET(clients[nclients_iterator], &except_fds);
             }
             buf[rval]=0;
-            snprintf(s, BUFLEN,  "Received: %d (%d) bytes containing %s", rval, strnlen(buf, BUFLEN), buf);
+            snprintf(s, BUFLEN,  "Received: %d (%lu) bytes containing %s", rval, strnlen(buf, BUFLEN), buf);
             data = std::string(buf);
             nclient = nclients_iterator;
             perror(s);
