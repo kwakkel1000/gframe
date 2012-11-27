@@ -102,7 +102,8 @@ bool configreader::readFile(std::string _ConfigFile)
                 {
                     std::transform(section.begin(), section.end(), section.begin(), (int(*)(int)) std::tolower);
                     //if (boost::iequals(section, "config"))
-                    if (section.compare("config"))
+                    //if (section.compare("config"))
+                    if (section == "config")
                     {
                         std::string var = line;
                         //boost::trim(var);
