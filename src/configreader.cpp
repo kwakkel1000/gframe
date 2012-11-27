@@ -23,6 +23,7 @@
 //
 
 #include <gframe/configreader.h>
+#include <gframe/lib.h>
 //#include <boost/algorithm/string.hpp>
 #include <algorithm>
 #include <cctype>
@@ -76,6 +77,7 @@ bool configreader::readFile(std::string _ConfigFile)
             linenr++;
 
             // Uncomment if boost available :D
+            lib::trim(line);
             //boost::trim(line);
 
             // Filter empty and comment lines
@@ -116,6 +118,8 @@ bool configreader::readFile(std::string _ConfigFile)
                         {
                             std::string var = line.substr(0, pos);
                             std::string value = line.substr(pos+1, line.length()-pos-1);
+                            lib::trim(var);
+                            lib::trim(value);
                             //boost::trim(var);
                             //boost::trim(value);
 
