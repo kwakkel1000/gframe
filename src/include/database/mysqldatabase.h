@@ -34,7 +34,7 @@
 #include <vector>
 
 // Meh! I changed all the char* to const char* but it would be easier if they where std::string's
-class mysqldatabase : public virtual database
+class mysqldatabase : public database
 {
     public:
         // class constructor
