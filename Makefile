@@ -2,11 +2,10 @@ GIT_VERSION = $(shell sh -c 'git describe --abbrev=4 --dirty --always')
 CC = g++
 CFLAGS = -D__GIT_VERSION=\"$(GIT_VERSION)\" -pipe -std=c++11 -O0#n for nondebug
 CXXFLAGS = $(CFLAGS) -Wall -g #-g << debugging
-#BOOSTLIBS = -lboost_thread #depends on arch	linux
 MYSQLLIBS = -lmysqlclient
 LIBS = -ldl
 INC=-I./src/
-#INC=-I/root/dev/gframe/src/
+MAKEFLAGS = -j3 #-j#n for threaded compiling
 
 MKDIR_P = mkdir -p
 
