@@ -212,7 +212,7 @@ bool databasedata::update(std::string msWhere, std::vector< std::string > mvKeys
 
 std::vector< std::vector< std::string > > databasedata::raw_sql(std::string query)
 {
-    std::lock_guard<std::mutex> lock1(m_SqlMutex);
+    std::unique_lock<std::mutex> lock1(m_SqlMutex);
     std::vector< std::vector< std::string > > sql_result;
     while (!m_db->connected())
     {
@@ -235,24 +235,29 @@ std::vector< std::vector< std::string > > databasedata::raw_sql(std::string quer
         sql_result = m_db->get(query.c_str());
         std::lock_guard<std::mutex> lock2(m_CounterMutex);
         m_last_query_time = time (NULL);
-        if (sql_queue.empty() && a_Run)
-        {
-            {
-                m_CounterAvailableCondition.notify_one();
-            }
-        }
     }
     else
     {
         //Output::Instance().addStatus(false, "DB Fail [" + convertInt(state) + "] " + mHostName + " " + mDatabaseName + " " + mUserName);
     }
+    if (sql_queue.empty() && a_Run)
+    {
+        {
+            m_CounterAvailableCondition.notify_one();
+        }
+    }
+    lock1.unlock();
     return sql_result;
 }
 
 void databasedata::add_sql_queue(std::string query)
 {
-    std::lock_guard<std::mutex> lock(m_SqlMutex);
+    std::unique_lock<std::mutex> lock(m_SqlMutex);
+    output::instance().addOutput("databasedata::add_sql_queue  sql_queue.push(query)", 10);
     sql_queue.push(query);
+    output::instance().addOutput("databasedata::add_sql_queue  lock.unlock()", 10);
+    lock.unlock();
+    output::instance().addOutput("databasedata::add_sql_queue  m_SqlAvailable.notify_one()", 10);
     m_SqlAvailable.notify_one();
 }
 
