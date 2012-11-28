@@ -176,6 +176,14 @@ int mainbase::run()
     }
     output::instance().setLogFile(m_LogFile);
     output::instance().init();
+    std::string startBlock = "+++++++++++++++++++++++++++++++++";
+    for (unsigned int m_Name_Iterator = 0; m_Name_Iterator < m_Name.size(); m_Name_Iterator++)
+    {
+        startBlock = startBlock + "+";
+    }
+    output::instance().addOutput(startBlock, 2);
+    output::instance().addOutput("+ Start " + m_Name + " on " + output::instance().sFormatTime("%d-%m-%Y %H:%M:%S") + " +", 2);
+    output::instance().addOutput(startBlock, 2);
     int DaemonizeStatus = daemonize(!m_Foreground);
     if (DaemonizeStatus != -1)
     {
@@ -183,7 +191,7 @@ int mainbase::run()
     }
     if (m_DropRoot)
     {
-        fprintf(stdout, "dropping root\n");
+        output::instance().addOutput("dropping root", 2);
         if (!dropRoot())
         {
             return 1;
@@ -193,14 +201,6 @@ int mainbase::run()
     {
         return 1;
     }
-    std::string startBlock = "+++++++++++++++++++++++++++++++++";
-    for (unsigned int m_Name_Iterator = 0; m_Name_Iterator < m_Name.size(); m_Name_Iterator++)
-    {
-        startBlock = startBlock + "+";
-    }
-    output::instance().addOutput(startBlock, 2);
-    output::instance().addOutput("+ Start " + m_Name + " on " + output::instance().sFormatTime("%d-%m-%Y %H:%M:%S") + " +", 2);
-    output::instance().addOutput(startBlock, 2);
     usleep(2000000);
     return -1;
 }
@@ -273,12 +273,12 @@ bool mainbase::dropRoot()
     struct group *pGroup = getgrnam(m_Gid.c_str());
     if (!pUser)
     {
-        std::cout << "User not found" << std::endl;
+        output::instance().addStatus(false, "User not found");
         return false;
     }
     else if (!pGroup)
     {
-        std::cout << "Group not found" << std::endl;
+        output::instance().addStatus(false, "Group not found");
         return false;
     }
     else
@@ -287,7 +287,7 @@ bool mainbase::dropRoot()
         int uid = pUser->pw_uid;
         if (gid == 0 || uid == 0)
         {
-            std::cout << "Cannot run as root" << std::endl;
+            output::instance().addStatus(false, "Cannot run as root");
             return false;
         }
         else
@@ -297,21 +297,21 @@ bool mainbase::dropRoot()
                 sg = setgroups(0, NULL);
                 if (sg < 0)
                 {
-                    std::cout << "Could not remove supplementary groups!" << std::endl;
+                    output::instance().addStatus(false, "Could not remove supplementary groups!");
                     return false;
                 }
                 g = setgid(pGroup->gr_gid);
                 eg = setegid(pGroup->gr_gid);
                 if ((g < 0) || (eg < 0))
                 {
-                    std::cout << "Could not switch group id!" << std::endl;
+                    output::instance().addStatus(false, "Could not switch group id!");
                     return false;
                 }
                 u = setuid(pUser->pw_uid);
                 eu = seteuid(pUser->pw_uid);
                 if ((u < 0) || (eu < 0))
                 {
-                    std::cout << "Could not switch user id!" << std::endl;
+                    output::instance().addStatus(false, "Could not switch user id!");
                     return false;
                 }
             }
