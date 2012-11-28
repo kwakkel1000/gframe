@@ -35,6 +35,7 @@
 #include <grp.h>
 #include <pwd.h>
 
+std::string NAME = "add std::string NAME in your code";
 std::string gNAME = "gframe";
 std::string gVERSION = __GIT_VERSION;
 
@@ -44,11 +45,11 @@ mainbase::mainbase() : m_INeedRoot(false), m_DropRoot(false), m_Foreground(false
 
 void mainbase::init()
 {
-    addVersion("gframe " + gVERSION);
+    addVersion(gNAME + " " + gVERSION);
     /*m_INeedRoot = false;
     m_DropRoot = false;
     m_Foreground = false;*/
-    m_Name = gNAME;
+    m_Name = NAME;
     m_PidFileLocation = "/var/run/" + m_Name + "/";
     m_LogFileLocation = "log/";
     m_IniFile = "conf/" + m_Name + ".ini";
