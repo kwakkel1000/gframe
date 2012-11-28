@@ -31,7 +31,7 @@
 #include <string>
 #include <vector>
 
-databasedata::databasedata()
+databasedata::databasedata() : m_last_query_time(time (NULL))
 {
     wait_time = 300;
 }
@@ -61,6 +61,7 @@ void databasedata::init(database* db, std::string hostname, std::string database
     a_Run = true;
     m_CounterThread = std::shared_ptr<std::thread>(new std::thread(std::bind(&databasedata::db_timer, this)));
     m_QueryThread = std::shared_ptr<std::thread>(new std::thread(std::bind(&databasedata::query_run, this)));
+    m_SettingsAvailableCondition.notify_all();
 }
 void databasedata::init(database* db, std::string filename)
 {
@@ -70,6 +71,7 @@ void databasedata::init(database* db, std::string filename)
     a_Run = true;
     m_CounterThread = std::shared_ptr<std::thread>(new std::thread(std::bind(&databasedata::db_timer, this)));
     m_QueryThread = std::shared_ptr<std::thread>(new std::thread(std::bind(&databasedata::query_run, this)));
+    m_SettingsAvailableCondition.notify_all();
 }
 
 
@@ -207,6 +209,45 @@ bool databasedata::update(std::string msWhere, std::vector< std::string > mvKeys
     return false;
 }
 
+std::vector< std::vector< std::string > > databasedata::raw_sql(std::string query)
+{
+    std::lock_guard<std::mutex> lock1(m_SqlMutex);
+    std::vector< std::vector< std::string > > sql_result;
+    while (!m_db->connected())
+    {
+        output::instance().addOutput("databasedata::raw_sql open connection", 10);
+        std::vector<const char *> Arguments;
+        Arguments.clear();
+        Arguments.push_back(m_HostName.c_str());
+        Arguments.push_back(m_DatabaseName.c_str());
+        Arguments.push_back(m_UserName.c_str());
+        Arguments.push_back(m_Pass.c_str());
+        state = m_db->connect(Arguments);
+        if (state == 0)
+        {
+            output::instance().addOutput("wrong amount of arguments, 4 needed (hostname, databasename, username, password)", 2);
+            exit (0);
+        }
+    }
+    if (state == 200 && m_db->connected())
+    {
+        sql_result = m_db->get(query.c_str());
+        std::lock_guard<std::mutex> lock2(m_CounterMutex);
+        m_last_query_time = time (NULL);
+        if (sql_queue.empty() && a_Run)
+        {
+            {
+                m_CounterAvailableCondition.notify_one();
+            }
+        }
+    }
+    else
+    {
+        //Output::Instance().addStatus(false, "DB Fail [" + convertInt(state) + "] " + mHostName + " " + mDatabaseName + " " + mUserName);
+    }
+    return sql_result;
+}
+
 void databasedata::add_sql_queue(std::string query)
 {
     std::lock_guard<std::mutex> lock(m_SqlMutex);
@@ -222,11 +263,9 @@ void databasedata::query_run()
     output::instance().addOutput("databasedata::query_run QueryRun started", 7);
     while (a_Run)
     {
-        // function below locks (lock1.lock());
         std::unique_lock<std::mutex> lock1(m_SqlMutex);
         while (sql_queue.empty() && a_Run)
         {
-            //std::cout << "databasedata::query_run m_SqlAvailable.wait(lock1);" << std::endl;
             m_SqlAvailable.wait(lock1);
         }
         while (!m_db->connected())
@@ -272,10 +311,6 @@ void databasedata::query_run()
         }
         lock1.unlock();
     }
-    /*if (m_db)
-    {
-        m_db->disconnect();
-    }*/
 }
 
 void databasedata::db_timer()
@@ -292,43 +327,4 @@ void databasedata::db_timer()
         db_timer_lock.unlock();
         std::this_thread::sleep_for( std::chrono::seconds(1) );
     }
-}
-
-std::vector< std::vector< std::string > > databasedata::raw_sql(std::string query)
-{
-    std::lock_guard<std::mutex> lock1(m_SqlMutex);
-    std::vector< std::vector< std::string > > sql_result;
-    while (!m_db->connected())
-    {
-        output::instance().addOutput("databasedata::raw_sql open connection", 10);
-        std::vector<const char *> Arguments;
-        Arguments.clear();
-        Arguments.push_back(m_HostName.c_str());
-        Arguments.push_back(m_DatabaseName.c_str());
-        Arguments.push_back(m_UserName.c_str());
-        Arguments.push_back(m_Pass.c_str());
-        state = m_db->connect(Arguments);
-        if (state == 0)
-        {
-            output::instance().addOutput("wrong amount of arguments, 4 needed (hostname, databasename, username, password)", 2);
-            exit (0);
-        }
-    }
-    if (state == 200 && m_db->connected())
-    {
-        sql_result = m_db->get(query.c_str());
-        std::lock_guard<std::mutex> lock2(m_CounterMutex);
-        m_last_query_time = time (NULL);
-        if (sql_queue.empty() && a_Run)
-        {
-            {
-                m_CounterAvailableCondition.notify_one();
-            }
-        }
-    }
-    else
-    {
-        //Output::Instance().addStatus(false, "DB Fail [" + convertInt(state) + "] " + mHostName + " " + mDatabaseName + " " + mUserName);
-    }
-    return sql_result;
 }
