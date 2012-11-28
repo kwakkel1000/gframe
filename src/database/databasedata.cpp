@@ -317,7 +317,9 @@ void databasedata::db_timer()
         if (time (NULL) - m_last_query_time >= wait_time)
         {
             output::instance().addOutput("databasedata::db_timer connection closed", 10);
+            std::unique_lock<std::mutex> db_lock(m_SqlMutex);
             m_db->disconnect();
+            db_lock.unlock();
             m_CounterAvailableCondition.wait(db_timer_lock);
         }
         db_timer_lock.unlock();
