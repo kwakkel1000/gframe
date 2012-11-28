@@ -61,7 +61,7 @@ void databasedata::init(database* db, std::string hostname, std::string database
     m_CounterThread = std::shared_ptr<std::thread>(new std::thread(std::bind(&databasedata::db_timer, this)));
     m_QueryThread = std::shared_ptr<std::thread>(new std::thread(std::bind(&databasedata::query_run, this)));
     settingslock.unlock();
-    m_SettingsAvailableCondition.notify_all();
+    //m_SettingsAvailableCondition.notify_all();
 }
 void databasedata::init(database* db, std::string filename)
 {
@@ -72,7 +72,7 @@ void databasedata::init(database* db, std::string filename)
     m_CounterThread = std::shared_ptr<std::thread>(new std::thread(std::bind(&databasedata::db_timer, this)));
     m_QueryThread = std::shared_ptr<std::thread>(new std::thread(std::bind(&databasedata::query_run, this)));
     settingslock.unlock();
-    m_SettingsAvailableCondition.notify_all();
+    //m_SettingsAvailableCondition.notify_all();
 }
 
 
@@ -263,9 +263,9 @@ void databasedata::add_sql_queue(std::string query)
 
 void databasedata::query_run()
 {
-    std::unique_lock<std::mutex> settingslock(m_SettingsMutex);
+    /*std::unique_lock<std::mutex> settingslock(m_SettingsMutex);
     m_SettingsAvailableCondition.wait(settingslock);
-    settingslock.unlock();
+    settingslock.unlock();*/
     output::instance().addOutput("databasedata::query_run QueryRun started", 7);
     while (a_Run)
     {

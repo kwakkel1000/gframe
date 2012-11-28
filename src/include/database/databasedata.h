@@ -88,7 +88,7 @@ class databasedata
         std::shared_ptr< std::thread > m_CounterThread;
         std::condition_variable m_SqlAvailable;
         std::condition_variable m_CounterAvailableCondition;
-        std::condition_variable m_SettingsAvailableCondition;
+        //std::condition_variable m_SettingsAvailableCondition;
         std::mutex m_SqlMutex;
         std::mutex m_CounterMutex;
         std::mutex m_SettingsMutex;
