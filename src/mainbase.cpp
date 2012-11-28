@@ -35,20 +35,20 @@
 #include <grp.h>
 #include <pwd.h>
 
-std::string VERSION = __GIT_VERSION;
-std::string NAME = "gframe";
+std::string gNAME = "gframe";
+std::string gVERSION = __GIT_VERSION;
 
-mainbase::mainbase()
+mainbase::mainbase() : m_INeedRoot(false), m_DropRoot(false), m_Foreground(false)
 {
 }
 
 void mainbase::init()
 {
-    m_INeedRoot = false;
+    addVersion("gframe " + gVERSION);
+    /*m_INeedRoot = false;
     m_DropRoot = false;
-    m_Foreground = false;
-    m_Name = NAME;
-    m_Version = VERSION;
+    m_Foreground = false;*/
+    m_Name = gNAME;
     m_PidFileLocation = "/var/run/" + m_Name + "/";
     m_LogFileLocation = "log/";
     m_IniFile = "conf/" + m_Name + ".ini";
@@ -81,7 +81,7 @@ void mainbase::parseArgs(std::vector<std::string> args)
         }
         else if (args[nArg] == "--version" || args[nArg] == "-v")
         {
-            std::cout << m_Name << " " << m_Version << std::endl;
+            showVersion();
             exit(EXIT_SUCCESS);
         }
         else if (args[nArg] == "--foreground" || args[nArg] == "-f")
@@ -320,6 +320,19 @@ bool mainbase::dropRoot()
         return true;
     }
     return true;
+}
+
+void mainbase::showVersion()
+{
+    for (unsigned int Version_iterator = 0; Version_iterator < m_VersionItems.size(); Version_iterator++)
+    {
+        std::cout << m_VersionItems[Version_iterator] << std::endl;
+    }
+}
+
+void mainbase::addVersion(std::string VersionItem)
+{
+    m_VersionItems.push_back(VersionItem);
 }
 
 void mainbase::showHelp()

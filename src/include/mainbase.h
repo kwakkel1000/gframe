@@ -55,6 +55,7 @@ class mainbase
         void addHelpItem(std::string HelpItem);
 
         void showVersion();
+        void addVersion(std::string VersionItem);
 
     private:
         bool isRoot();
@@ -72,13 +73,13 @@ class mainbase
         std::string m_Uid;
         std::string m_Gid;
         std::string m_Name;
-        std::string m_Version;
         std::string m_LogFileLocation;
         std::string m_PidFileLocation;
         std::string m_IniFile;
         std::string m_PidFile;
         std::string m_LogFile;
         std::vector<std::string> m_HelpItems;
+        std::vector<std::string> m_VersionItems;
 
 };
 
