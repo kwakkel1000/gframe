@@ -26,11 +26,6 @@
 #include <gframe/output.h>
 #include <chrono>
 
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
-
 databasedata::databasedata() : wait_time(300), m_last_query_time(time (NULL))
 {
 }
@@ -61,7 +56,6 @@ void databasedata::init(database* db, std::string hostname, std::string database
     m_CounterThread = std::shared_ptr<std::thread>(new std::thread(std::bind(&databasedata::db_timer, this)));
     m_QueryThread = std::shared_ptr<std::thread>(new std::thread(std::bind(&databasedata::query_run, this)));
     settingslock.unlock();
-    //m_SettingsAvailableCondition.notify_all();
 }
 void databasedata::init(database* db, std::string filename)
 {
@@ -72,7 +66,6 @@ void databasedata::init(database* db, std::string filename)
     m_CounterThread = std::shared_ptr<std::thread>(new std::thread(std::bind(&databasedata::db_timer, this)));
     m_QueryThread = std::shared_ptr<std::thread>(new std::thread(std::bind(&databasedata::query_run, this)));
     settingslock.unlock();
-    //m_SettingsAvailableCondition.notify_all();
 }
 
 
@@ -95,7 +88,7 @@ std::vector< std::string > databasedata::get(std::string msWhere, std::string ms
     _sSqlString = _sSqlString + msWhere;
     _sSqlString = _sSqlString + "` WHERE ";
     _sSqlString = _sSqlString + msCondition;
-    std::cout << _sSqlString << std::endl;
+    output::instance().addOutput(_sSqlString, 9);
     std::vector< std::vector< std::string > > _vSqlResult;
     std::vector< std::string > _vDataResult;
     _vSqlResult= raw_sql(_sSqlString);
@@ -263,9 +256,6 @@ void databasedata::add_sql_queue(std::string query)
 
 void databasedata::query_run()
 {
-    /*std::unique_lock<std::mutex> settingslock(m_SettingsMutex);
-    m_SettingsAvailableCondition.wait(settingslock);
-    settingslock.unlock();*/
     output::instance().addOutput("databasedata::query_run QueryRun started", 7);
     while (a_Run)
     {
@@ -298,7 +288,7 @@ void databasedata::query_run()
                 sql_queue.pop();
                 if (state == 200 && m_db->connected())
                 {
-                    std::cout << temp << std::endl;
+                    output::instance().addOutput(temp, 9);
                     m_db->set(temp.c_str());
                     std::lock_guard<std::mutex> lock2(m_CounterMutex);
                     m_last_query_time = time (NULL);
