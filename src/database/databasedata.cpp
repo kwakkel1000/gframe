@@ -31,9 +31,8 @@
 #include <string>
 #include <vector>
 
-databasedata::databasedata() : m_last_query_time(time (NULL))
+databasedata::databasedata() : wait_time(300), m_last_query_time(time (NULL))
 {
-    wait_time = 300;
 }
 
 databasedata::~databasedata()
@@ -52,7 +51,7 @@ databasedata::~databasedata()
 
 void databasedata::init(database* db, std::string hostname, std::string databasename, std::string username, std::string password)
 {
-    std::lock_guard<std::mutex> settingslock(m_SettingsMutex);
+    std::unique_lock<std::mutex> settingslock(m_SettingsMutex);
     m_db = db;
     m_HostName = hostname;
     m_DatabaseName = databasename;
@@ -61,16 +60,18 @@ void databasedata::init(database* db, std::string hostname, std::string database
     a_Run = true;
     m_CounterThread = std::shared_ptr<std::thread>(new std::thread(std::bind(&databasedata::db_timer, this)));
     m_QueryThread = std::shared_ptr<std::thread>(new std::thread(std::bind(&databasedata::query_run, this)));
+    settingslock.unlock();
     m_SettingsAvailableCondition.notify_all();
 }
 void databasedata::init(database* db, std::string filename)
 {
-    std::lock_guard<std::mutex> settingslock(m_SettingsMutex);
+    std::unique_lock<std::mutex> settingslock(m_SettingsMutex);
     m_db = db;
     m_FileName = filename;
     a_Run = true;
     m_CounterThread = std::shared_ptr<std::thread>(new std::thread(std::bind(&databasedata::db_timer, this)));
     m_QueryThread = std::shared_ptr<std::thread>(new std::thread(std::bind(&databasedata::query_run, this)));
+    settingslock.unlock();
     m_SettingsAvailableCondition.notify_all();
 }
 
