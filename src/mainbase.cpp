@@ -158,6 +158,7 @@ void mainbase::parseArgs(std::vector<std::string> args)
 
 int mainbase::run()
 {
+    showVersion();
     if (readPidFile())
     {
         return 1;
@@ -324,6 +325,8 @@ bool mainbase::dropRoot()
 
 void mainbase::showVersion()
 {
+    std::cout << "Copyright (c) 2012 Gijs Kwakkel" << std::endl;
+    std::cout << "GNU Version 2" << std::endl;
     for (unsigned int Version_iterator = 0; Version_iterator < m_VersionItems.size(); Version_iterator++)
     {
         std::cout << m_VersionItems[Version_iterator] << std::endl;
