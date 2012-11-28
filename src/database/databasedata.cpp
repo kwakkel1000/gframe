@@ -26,7 +26,7 @@
 #include <gframe/output.h>
 #include <chrono>
 
-databasedata::databasedata() : wait_time(300), m_last_query_time(time (NULL))
+databasedata::databasedata() : wait_time(300), a_last_query_time(time (NULL))
 {
 }
 
@@ -112,7 +112,7 @@ bool databasedata::del(std::string msWhere, std::string msCondition)
     _sSqlString = _sSqlString + msCondition;
     add_sql_queue(_sSqlString);
     return true;
-    return false;
+    //return false;
 }
 
 bool databasedata::insert(std::string msWhere, std::string msKey, std::string msValue)
@@ -127,7 +127,7 @@ bool databasedata::insert(std::string msWhere, std::string msKey, std::string ms
     _sSqlString = _sSqlString + "')";
     add_sql_queue(_sSqlString);
     return true;
-    return false;
+    //return false;
 }
 
 bool databasedata::insert(std::string msWhere, std::vector< std::string > mvKeys, std::vector< std::string > mvValues)
@@ -157,7 +157,7 @@ bool databasedata::insert(std::string msWhere, std::vector< std::string > mvKeys
     }
     add_sql_queue(_sSqlString);
     return true;
-    return false;
+    //return false;
 }
 
 bool databasedata::update(std::string msWhere, std::string msKey, std::string msValue, std::string msCondition)
@@ -173,7 +173,7 @@ bool databasedata::update(std::string msWhere, std::string msKey, std::string ms
     _sSqlString = _sSqlString + msCondition;
     add_sql_queue(_sSqlString);
     return true;
-    return false;
+    //return false;
 }
 
 bool databasedata::update(std::string msWhere, std::vector< std::string > mvKeys, std::vector< std::string > mvValues, std::string msCondition)
@@ -200,7 +200,7 @@ bool databasedata::update(std::string msWhere, std::vector< std::string > mvKeys
     _sSqlString = _sSqlString + msCondition;
     add_sql_queue(_sSqlString);
     return true;
-    return false;
+    //return false;
 }
 
 std::vector< std::vector< std::string > > databasedata::raw_sql(std::string query)
@@ -226,8 +226,9 @@ std::vector< std::vector< std::string > > databasedata::raw_sql(std::string quer
     if (state == 200 && m_db->connected())
     {
         sql_result = m_db->get(query.c_str());
-        std::lock_guard<std::mutex> lock2(m_CounterMutex);
-        m_last_query_time = time (NULL);
+        //std::lock_guard<std::mutex> lock2(m_CounterMutex);
+        //m_last_query_time = time (NULL);
+        a_last_query_time = time (NULL);
     }
     else
     {
@@ -290,8 +291,10 @@ void databasedata::query_run()
                 {
                     output::instance().addOutput(temp, 9);
                     m_db->set(temp.c_str());
-                    std::lock_guard<std::mutex> lock2(m_CounterMutex);
-                    m_last_query_time = time (NULL);
+                    //std::lock_guard<std::mutex> lock2(m_CounterMutex);
+                    //m_last_query_time = time (NULL);
+                    //a_last_query_time = time (NULL);
+                    a_last_query_time.store(time (NULL));
                 }
                 else
                 {
@@ -314,7 +317,10 @@ void databasedata::db_timer()
     while (a_Run)
     {
         std::unique_lock<std::mutex> db_timer_lock(m_CounterMutex);
-        if (time (NULL) - m_last_query_time >= wait_time)
+        unsigned int last_query = a_last_query_time.load();
+        unsigned int delta_time = time (NULL) - last_query;
+        //if (time (NULL) - m_last_query_time >= wait_time)
+        if (delta_time >= wait_time)
         {
             output::instance().addOutput("databasedata::db_timer connection closed", 10);
             std::unique_lock<std::mutex> db_lock(m_SqlMutex);

@@ -66,11 +66,10 @@ bool configreader::readFile(std::string _ConfigFile)
     std::string line;
     std::string section("global"); // default value
     std::ifstream configfile;
-    int linenr = 0;
-
     configfile.open(_ConfigFile.c_str());
     if (configfile.is_open())
     {
+        int linenr = 0;
         while (configfile.good())
         {
             getline(configfile, line);

@@ -229,7 +229,7 @@ bool mainbase::readPidFile()
     {
         printf("still running \r\n");
         return true;
-        exit(EXIT_FAILURE);
+        //exit(EXIT_FAILURE);
     }
     return false;
     // end check
@@ -270,7 +270,6 @@ bool mainbase::isRoot()
 
 bool mainbase::dropRoot()
 {
-    int u, eu, g, eg, sg;
     struct passwd *pUser = getpwnam(m_Uid.c_str());
     struct group *pGroup = getgrnam(m_Gid.c_str());
     if (!pUser)
@@ -296,6 +295,7 @@ bool mainbase::dropRoot()
         {
             if ((geteuid() == 0) || (getuid() == 0) || (getegid() == 0) || (getgid()== 0))
             {
+                int u, eu, g, eg, sg;
                 sg = setgroups(0, NULL);
                 if (sg < 0)
                 {

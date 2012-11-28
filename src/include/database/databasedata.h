@@ -73,8 +73,9 @@ class databasedata
         std::atomic<bool> a_Run;
         int state;
         std::queue< std::string > sql_queue;
-        unsigned int wait_time;
+        const unsigned int wait_time;
         time_t m_last_query_time;
+        std::atomic<unsigned int> a_last_query_time;
 
         // config vars
         std::string m_FileName;
