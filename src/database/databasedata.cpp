@@ -22,7 +22,6 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 //
 
-//#include "../include/database/databasedata.h"
 #include <gframe/database/databasedata.h>
 #include <gframe/output.h>
 #include <chrono>
@@ -40,15 +39,15 @@ databasedata::databasedata()
 databasedata::~databasedata()
 {
     output::instance().addOutput("databasedata::~databasedata", 10);
-    m_Run = false;
+    a_Run = false;
     m_SqlAvailable.notify_all();
     m_CounterAvailableCondition.notify_all();
     output::instance().addOutput("databasedata::~databasedata  m_QueryThread->join();", 10);
     m_QueryThread->join();
     output::instance().addOutput("databasedata::~databasedata  m_CounterThread->join();", 10);
     m_CounterThread->join();
+    delete m_db;
     output::instance().addOutput("databasedata::~databasedata  done", 10);
-    //delete m_db;
 }
 
 void databasedata::init(database* db, std::string hostname, std::string databasename, std::string username, std::string password)
@@ -59,7 +58,7 @@ void databasedata::init(database* db, std::string hostname, std::string database
     m_DatabaseName = databasename;
     m_UserName = username;
     m_Pass = password;
-    m_Run = true;
+    a_Run = true;
     m_CounterThread = std::shared_ptr<std::thread>(new std::thread(std::bind(&databasedata::db_timer, this)));
     m_QueryThread = std::shared_ptr<std::thread>(new std::thread(std::bind(&databasedata::query_run, this)));
 }
@@ -68,7 +67,7 @@ void databasedata::init(database* db, std::string filename)
     std::lock_guard<std::mutex> settingslock(m_SettingsMutex);
     m_db = db;
     m_FileName = filename;
-    m_Run = true;
+    a_Run = true;
     m_CounterThread = std::shared_ptr<std::thread>(new std::thread(std::bind(&databasedata::db_timer, this)));
     m_QueryThread = std::shared_ptr<std::thread>(new std::thread(std::bind(&databasedata::query_run, this)));
 }
@@ -94,7 +93,6 @@ std::vector< std::string > databasedata::get(std::string msWhere, std::string ms
     _sSqlString = _sSqlString + "` WHERE ";
     _sSqlString = _sSqlString + msCondition;
     std::cout << _sSqlString << std::endl;
-    //Output::Instance().addOutput(_sSqlString, 5);
     std::vector< std::vector< std::string > > _vSqlResult;
     std::vector< std::string > _vDataResult;
     _vSqlResult= raw_sql(_sSqlString);
@@ -161,7 +159,6 @@ bool databasedata::insert(std::string msWhere, std::vector< std::string > mvKeys
     {
         _sSqlString = _sSqlString + "'" + mvValues[mvValues.size() -1] + "')";
     }
-    //Output::Instance().addOutput(_sSqlString, 5);
     add_sql_queue(_sSqlString);
     return true;
     return false;
@@ -178,7 +175,6 @@ bool databasedata::update(std::string msWhere, std::string msKey, std::string ms
     _sSqlString = _sSqlString + msValue;
     _sSqlString = _sSqlString + "' WHERE ";
     _sSqlString = _sSqlString + msCondition;
-    //Output::Instance().addOutput(_sSqlString, 5);
     add_sql_queue(_sSqlString);
     return true;
     return false;
@@ -206,7 +202,6 @@ bool databasedata::update(std::string msWhere, std::vector< std::string > mvKeys
     }
     _sSqlString = _sSqlString + " WHERE ";
     _sSqlString = _sSqlString + msCondition;
-    //Output::Instance().addOutput(_sSqlString, 5);
     add_sql_queue(_sSqlString);
     return true;
     return false;
@@ -214,26 +209,22 @@ bool databasedata::update(std::string msWhere, std::vector< std::string > mvKeys
 
 void databasedata::add_sql_queue(std::string query)
 {
-    //std::cout << query << std::endl;
     std::lock_guard<std::mutex> lock(m_SqlMutex);
     sql_queue.push(query);
-    //std::cout << "databasedata::add_sql_queue m_SqlAvailable.notify_one();" << std::endl;
     m_SqlAvailable.notify_one();
 }
 
 void databasedata::query_run()
 {
-    //std::lock_guard<std::mutex> settingslock(m_SettingsMutex);
-    while (!m_Run)
-    {
-        std::this_thread::sleep_for( std::chrono::seconds(1) );
-    }
+    std::unique_lock<std::mutex> settingslock(m_SettingsMutex);
+    m_SettingsAvailableCondition.wait(settingslock);
+    settingslock.unlock();
     output::instance().addOutput("databasedata::query_run QueryRun started", 7);
-    while (m_Run)
+    while (a_Run)
     {
         // function below locks (lock1.lock());
         std::unique_lock<std::mutex> lock1(m_SqlMutex);
-        while (sql_queue.empty() && m_Run)
+        while (sql_queue.empty() && a_Run)
         {
             //std::cout << "databasedata::query_run m_SqlAvailable.wait(lock1);" << std::endl;
             m_SqlAvailable.wait(lock1);
@@ -256,7 +247,7 @@ void databasedata::query_run()
         }
         if (state == 200 && m_db->connected())
         {
-            while (!sql_queue.empty() && m_Run)
+            while (!sql_queue.empty() && a_Run)
             {
                 std::string temp = sql_queue.front();
                 sql_queue.pop();
@@ -272,11 +263,9 @@ void databasedata::query_run()
                     break;
                 }
             }
-            if (sql_queue.empty() && m_Run)
+            if (sql_queue.empty() && a_Run)
             {
                 {
-                    /*std::mutex::lock_guard lock(m_CounterMutex);
-                    counter = 0;*/
                     m_CounterAvailableCondition.notify_one();
                 }
             }
@@ -291,43 +280,18 @@ void databasedata::query_run()
 
 void databasedata::db_timer()
 {
-    while (m_Run)
+    while (a_Run)
     {
+        std::unique_lock<std::mutex> db_timer_lock(m_CounterMutex);
+        if (time (NULL) - m_last_query_time >= wait_time)
         {
-            if (time (NULL) - m_last_query_time >= wait_time)
-            {
-                //std::lock_guard<std::mutex> lock(m_CounterMutex);
-                std::unique_lock<std::mutex> db_timer_lock(m_CounterMutex);
-                output::instance().addOutput("databasedata::db_timer connection closed", 10);
-                m_db->disconnect();
-                m_CounterAvailableCondition.wait(db_timer_lock);
-                db_timer_lock.unlock();
-            }
-        }
-        //usleep(1000000);
-        std::this_thread::sleep_for( std::chrono::seconds(1) );
-        /*while (counter < wait_time && m_Run)
-        {
-            usleep(1000000);
-            {
-                //std::mutex::scoped_lock lock(m_CounterMutex);
-                counter++;
-            }
-        }
-        // mutex?
-        std::mutex::scoped_lock lock(m_CounterMutex);
-        if (counter == wait_time && m_db->connected())
-        {
-            std::cout << "connection closed" << std::endl;
+            output::instance().addOutput("databasedata::db_timer connection closed", 10);
             m_db->disconnect();
-            counter++;
-        }*/
+            m_CounterAvailableCondition.wait(db_timer_lock);
+        }
+        db_timer_lock.unlock();
+        std::this_thread::sleep_for( std::chrono::seconds(1) );
     }
-    /*if (m_db->connected())
-    {
-        std::cout << "connection closed" << std::endl;
-        m_db->disconnect();
-    }*/
 }
 
 std::vector< std::vector< std::string > > databasedata::raw_sql(std::string query)
@@ -336,26 +300,29 @@ std::vector< std::vector< std::string > > databasedata::raw_sql(std::string quer
     std::vector< std::vector< std::string > > sql_result;
     while (!m_db->connected())
     {
-        //std::cout << "open connection" << std::endl;
+        output::instance().addOutput("databasedata::raw_sql open connection", 10);
         std::vector<const char *> Arguments;
+        Arguments.clear();
         Arguments.push_back(m_HostName.c_str());
         Arguments.push_back(m_DatabaseName.c_str());
         Arguments.push_back(m_UserName.c_str());
         Arguments.push_back(m_Pass.c_str());
-        //state = m_db->connect(m_HostName.c_str(), m_DatabaseName.c_str(), m_UserName.c_str(), m_Pass.c_str());
         state = m_db->connect(Arguments);
+        if (state == 0)
+        {
+            output::instance().addOutput("wrong amount of arguments, 4 needed (hostname, databasename, username, password)", 2);
+            exit (0);
+        }
     }
     if (state == 200 && m_db->connected())
     {
         sql_result = m_db->get(query.c_str());
         std::lock_guard<std::mutex> lock2(m_CounterMutex);
         m_last_query_time = time (NULL);
-        if (sql_queue.empty() && m_Run)
+        if (sql_queue.empty() && a_Run)
         {
             {
-                /*std::mutex::scoped_lock lock(m_CounterMutex);
-                counter = 0;*/
-                m_CounterAvailableCondition.notify_one();/**/
+                m_CounterAvailableCondition.notify_one();
             }
         }
     }
