@@ -24,7 +24,8 @@
 
 #include <gframe/mainbase.h>
 
-
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include <fstream>
 #include <string>
@@ -39,23 +40,116 @@ std::string NAME = "add std::string NAME in your code";
 std::string gNAME = "gframe";
 std::string gVERSION = __GIT_VERSION;
 
-mainbase::mainbase() : m_INeedRoot(false), m_DropRoot(false), m_Foreground(false)
+void SegFaultAction(int i_num, siginfo_t * i_info, void * i_val)
 {
+    std::cout<< "SegFault Signal " << i_num << " caught..." << std::endl;
+
+    const siginfo_t & v = * i_info;
+
+    std::cout << v.si_signo << "= Signal number\n";
+    std::cout << v.si_errno << "= An errno value\n";
+    std::cout << v.si_code << "= Signal code\n";
+    std::cout << v.si_pid << "= Sending process ID\n";
+    std::cout << v.si_uid << "= Real user ID of sending process\n";
+    std::cout << v.si_status << "= Exit value or signal\n";
+#if defined(linux) || defined(__linux) || defined(__linux__)
+    std::cout << v.si_utime << "= User time consumed\n";
+    std::cout << v.si_stime << "= System time consumed\n";
+    std::cout << v.si_int << "= POSIX.1b signal\n";
+    std::cout << v.si_ptr << "= POSIX.1b signal\n";
+#endif
+    std::cout << v.si_addr << "= Memory location which caused fault\n";
+    std::cout << v.si_band << "= Band event\n";
+#if defined(linux) || defined(__linux) || defined(__linux__)
+    std::cout << v.si_fd << "= File descriptor\n";
+#endif
+
+    throw * i_info;
+    exit(0);
 }
 
-void mainbase::init()
+void TermAction(int i_num, siginfo_t * i_info, void * i_val)
 {
-    addVersion(gNAME + " " + gVERSION);
-    /*m_INeedRoot = false;
-    m_DropRoot = false;
-    m_Foreground = false;*/
-    m_Name = NAME;
-    m_PidFileLocation = "/var/run/" + m_Name + "/";
-    m_LogFileLocation = "log/";
-    m_IniFile = "conf/" + m_Name + ".ini";
-    m_PidFile = m_PidFileLocation + m_Name + ".pid";
-    m_LogFile = m_LogFileLocation + m_Name + ".log";
+    std::cout << "Term Signal " << i_num << " caught..." << std::endl;
+    std::cout << "from pid:   " << i_info->si_pid << std::endl;
+    std::cout << "si_errno:   " << i_info->si_errno << std::endl;
+    std::cout << "si_code:    " << i_info->si_code << std::endl;
+    std::cout << "si_uid:     " << i_info->si_uid << std::endl;
+    std::cout << "si_status:  " << i_info->si_status << std::endl;
+    exit(0);
+}
 
+void Usr1Action(int i_num, siginfo_t * i_info, void * i_val)
+{
+    std::cout<< "User Signal " << i_num << " caught..." << std::endl;
+    std::cout << "from pid:   " << i_info->si_pid << std::endl;
+    std::cout << "si_errno:   " << i_info->si_errno << std::endl;
+    std::cout << "si_code:    " << i_info->si_code << std::endl;
+    std::cout << "si_uid:     " << i_info->si_uid << std::endl;
+    std::cout << "si_status:  " << i_info->si_status << std::endl;
+    output::instance().closeLog();
+    usleep(1000000);
+    output::instance().openLog();
+    std::string startBlock = "+++++++++++++++++++++++++++++++++++++++++++++++";
+    output::instance().addOutput(startBlock, 2);
+    output::instance().addOutput("+ SIGUSR1 (rotate log) on " + output::instance().sFormatTime("%d-%m-%Y %H:%M:%S") + " +", 2);
+    output::instance().addOutput(startBlock, 2);
+}
+
+void mainbase::SetupSignal()
+{
+    struct sigaction new_action;
+    struct sigaction old_action;
+    /* Set up the structure to specify the new action. */
+    sigemptyset (&new_action.sa_mask);
+    new_action.sa_flags = SA_SIGINFO
+#if defined(linux) || defined(__linux) || defined(__linux__)
+      | SA_NOMASK
+#endif
+      ;
+
+// usr (rotate log) (signal 10)
+    new_action.sa_sigaction = Usr1Action;
+    sigaction (SIGUSR1, NULL, &old_action);
+    if (old_action.sa_handler != SIG_IGN)
+      sigaction (SIGUSR1, &new_action, NULL);
+
+// SegFault
+    new_action.sa_sigaction = SegFaultAction;
+    sigaction (SIGSEGV, NULL, &old_action);
+    if (old_action.sa_handler != SIG_IGN)
+      sigaction (SIGSEGV, &new_action, NULL);
+
+
+// termination
+    new_action.sa_sigaction = TermAction;
+    sigaction (SIGINT, NULL, &old_action);
+    if (old_action.sa_handler != SIG_IGN)
+      sigaction (SIGINT, &new_action, NULL);
+
+    sigaction (SIGHUP, NULL, &old_action);
+    if (old_action.sa_handler != SIG_IGN)
+      sigaction (SIGHUP, &new_action, NULL);
+
+    sigaction (SIGTERM, NULL, &old_action);
+    if (old_action.sa_handler != SIG_IGN)
+      sigaction (SIGTERM, &new_action, NULL);
+}
+
+
+mainbase::mainbase() :
+m_INeedRoot(false),
+m_DropRoot(false),
+m_Foreground(false),
+m_Name(NAME),
+m_LogFileLocation("log/"),
+m_PidFileLocation("/var/run/" + m_Name + "/"),
+m_IniFile("conf/" + m_Name + ".ini"),
+m_PidFile(m_PidFileLocation + m_Name + ".pid"),
+m_LogFile(m_LogFileLocation + m_Name + ".log")
+{
+    SetupSignal();
+    addVersion(gNAME + " " + gVERSION);
     addHelpItem("Runs the " + m_Name + " (default as " + m_Name + ", " + m_PidFile + ", " + m_LogFile + " " + m_IniFile + ")");
     addHelpItem("USAGE " + m_Name + " [OPTIONS]");
     addHelpItem("Available options:");
@@ -69,6 +163,11 @@ void mainbase::init()
     addHelpItem("\t-l, --log Set log file location (default: " + m_LogFileLocation + ")");
     addHelpItem("\t-n, --name Set name for pid/log files (default: " + m_Name + ")");
     addHelpItem("\t--INeedRootPowerz Requered when running as root (not needed when droproot is specified)");
+}
+
+mainbase::~mainbase()
+{
+    remove(m_PidFile.c_str());
 }
 
 void mainbase::parseArgs(std::vector<std::string> args)
@@ -103,20 +202,16 @@ void mainbase::parseArgs(std::vector<std::string> args)
         }
         else if (args[nArg] == "--config" || args[nArg] == "-c")
         {
-            //if ((nArg+1) < args.size())
             if ((++nArg) < args.size())
             {
-                //m_IniFile = args[nArg+1];
                 m_IniFile = args[nArg];
             }
         }
         else if (args[nArg] == "--debug" || args[nArg] == "-d")
         {
-            //if ((nArg+1) < args.size())
             if ((++nArg) < args.size())
             {
                 int i;
-                //std::stringstream ss(args[nArg+1]);
                 std::stringstream ss(args[nArg]);
                 ss >> i;
                 output::instance().setDebugLevel(i);
@@ -124,28 +219,22 @@ void mainbase::parseArgs(std::vector<std::string> args)
         }
         else if (args[nArg] == "--pid" || args[nArg] == "-p")
         {
-            //if ((nArg+1) < args.size())
             if ((++nArg) < args.size())
             {
-                //m_PidFileLocation = args[nArg+1];
                 m_PidFileLocation = args[nArg];
             }
         }
         else if (args[nArg] == "--log" || args[nArg] == "-l")
         {
-            //if ((nArg+1) < args.size())
             if ((++nArg) < args.size())
             {
-                //m_LogFileLocation = args[nArg+1];
                 m_LogFileLocation = args[nArg];
             }
         }
         else if (args[nArg] == "--name" || args[nArg] == "-n")
         {
-            //if ((nArg+1) < args.size())
             if ((++nArg) < args.size())
             {
-                //m_Name = args[nArg+1];
                 m_Name = args[nArg];
             }
         }
@@ -156,7 +245,6 @@ void mainbase::parseArgs(std::vector<std::string> args)
     }
 }
 
-
 int mainbase::run()
 {
     showVersion();
@@ -164,6 +252,8 @@ int mainbase::run()
     {
         return 1;
     }
+    createDirectory(m_LogFileLocation);
+    createDirectory(m_PidFileLocation);
     if (isRoot() && !m_DropRoot)
     {
         fprintf(stdout, "Your are running %s as root!\n", m_Name.c_str());
@@ -176,21 +266,6 @@ int mainbase::run()
         fprintf(stdout, "%s will start in 15 seconds.\n", m_Name.c_str());
         sleep(15);
     }
-    output::instance().setLogFile(m_LogFile);
-    output::instance().init();
-    std::string startBlock = "+++++++++++++++++++++++++++++++++";
-    for (unsigned int m_Name_Iterator = 0; m_Name_Iterator < m_Name.size(); m_Name_Iterator++)
-    {
-        startBlock = startBlock + "+";
-    }
-    output::instance().addOutput(startBlock, 2);
-    output::instance().addOutput("+ Start " + m_Name + " on " + output::instance().sFormatTime("%d-%m-%Y %H:%M:%S") + " +", 2);
-    output::instance().addOutput(startBlock, 2);
-    int DaemonizeStatus = daemonize(!m_Foreground);
-    if (DaemonizeStatus != -1)
-    {
-        return DaemonizeStatus;
-    }
     if (m_DropRoot)
     {
         output::instance().addOutput("dropping root", 2);
@@ -199,12 +274,48 @@ int mainbase::run()
             return 1;
         }
     }
+    int DaemonizeStatus = daemonize(!m_Foreground);
+    if (DaemonizeStatus != -1)
+    {
+        return DaemonizeStatus;
+    }
+    output::instance().setLogFile(m_LogFile);
+    output::instance().openLog();
+    std::string startBlock = "+++++++++++++++++++++++++++++++++";
+    for (unsigned int m_Name_Iterator = 0; m_Name_Iterator < m_Name.size(); m_Name_Iterator++)
+    {
+        startBlock = startBlock + "+";
+    }
+    output::instance().addOutput(startBlock, 2);
+    output::instance().addOutput("+ Start " + m_Name + " on " + output::instance().sFormatTime("%d-%m-%Y %H:%M:%S") + " +", 2);
+    output::instance().addOutput(startBlock, 2);
     if(!configreader::instance().readFile(m_IniFile))
     {
         return 1;
     }
     usleep(2000000);
     return -1;
+}
+
+bool mainbase::createDirectory(std::string directory)
+{
+    struct stat sb;
+    if (stat(directory.c_str(), &sb) != 0)
+    {
+        umask(0);
+        printf("creating %s\r\n", directory.c_str());
+        mkdir(directory.c_str(), S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO);
+        return true;
+    }
+    else
+    {
+        if (!S_ISDIR(sb.st_mode))
+        {
+            printf("%s exists but is not a directory!\r\n", directory.c_str());
+            return false;
+        }
+    }
+    return true;
 }
 
 bool mainbase::readPidFile()
@@ -262,7 +373,15 @@ bool mainbase::isRoot()
 {
 # if defined(_WIN32) || defined(__WIN32__) || defined(WIN32) || defined(__CYGWIN__)
     // User root? If one of these were root, we could switch the others to root, too
-    return (geteuid() == 0 || getuid() == 0);
+    if ((geteuid() == 0) || (getuid() == 0) || (getegid() == 0) || (getgid()== 0))
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+    //return (geteuid() == 0 || getuid() == 0);
 # else
     return false;
 # endif

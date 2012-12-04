@@ -42,12 +42,16 @@
 #include <gframe/output.h>
 #include <gframe/configreader.h>
 
+void SegFaultAction(int i_num, siginfo_t * i_info, void * i_val);
+void TermAction(int i_num, siginfo_t * i_info, void * i_val);
+void Usr1Action(int i_num, siginfo_t * i_info, void * i_val);
+
 class mainbase
 {
     public:
         mainbase();
+        ~mainbase();
 
-        void init();
         void parseArgs(std::vector<std::string> args);
         int run();
 
@@ -58,8 +62,12 @@ class mainbase
         void addVersion(std::string VersionItem);
 
     private:
+
+        void SetupSignal();
         bool isRoot();
         bool dropRoot();
+
+        bool createDirectory(std::string directory);
 
         bool readPidFile();
         void writePidFile(int Pid);

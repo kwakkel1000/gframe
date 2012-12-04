@@ -45,7 +45,8 @@ class output
         void setDebugLevel(int level);
         void setLogFile(std::string msLogFile);
 
-        void init();
+        void openLog();
+        void closeLog();
 
         void addStatus(bool bSuccess, std::string sOutput);
         void addOutput(std::string sOutput);

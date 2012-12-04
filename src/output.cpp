@@ -106,10 +106,16 @@ std::string output::sFormatTime(std::string sFormat)
     return cBuffer;
 }
 
-void output::init()
+void output::openLog()
 {
     fLogFile.open(sLogFile.c_str(), std::ios::app);
     fLogFile << "\r\n\r\n\r\n\r\nopen logfile\r\n";
+}
+
+void output::closeLog()
+{
+    fLogFile << "closing logfile \r\n\r\n\r\n\r\n";
+    fLogFile.close();
 }
 
 output::output()
@@ -121,7 +127,6 @@ output::output()
 
 output::~output()
 {
-    fLogFile << "closing logfile \r\n\r\n\r\n\r\n";
-    fLogFile.close();
+    closeLog();
 }
 
