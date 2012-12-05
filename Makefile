@@ -15,7 +15,7 @@ HEADER_DIR = $(SRC_DIR)include/
 #HEADER_DIR = $(SRC_DIR)include/interfaces/
 
 GFRAMEOBJECTS	= \
-		$(SRC_DIR)output.o $(SRC_DIR)lib.o \
+		$(SRC_DIR)output.o $(SRC_DIR)glib.o \
 		$(SRC_DIR)configreader.o $(SRC_DIR)mainbase.o
 
 DATABASEOBJECTS	= \
