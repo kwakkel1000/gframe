@@ -36,6 +36,11 @@
 #include <cctype>
 #include <locale>
 
+bool glib::iequals(std::string msInput1, std::string msInput2)
+{
+    return (toLower(msInput1) == toLower(msInput2));
+}
+
 // trim from start
 std::string &glib::ltrim(std::string &s) {
         s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
@@ -145,7 +150,11 @@ std::string glib::stringTimeFromIntSeconds(int _Seconds, bool _WithWeeks=true)
     return "";
 }
 
-
+std::string glib::toLower(std::string msInput)
+{
+    std::transform(msInput.begin(), msInput.end(), msInput.begin(), (int(*)(int)) std::tolower);
+    return msInput;
+}
 
 std::vector< int > glib::vectorTimeFromSecondsTime(int _Time)
 {

@@ -61,7 +61,7 @@ class databasedata
         bool del(std::string msWhere, std::string msCondition);
 
         std::vector< std::string > get(std::string msWhere, std::string msKey, std::string msCondition);
-        //std::vector< std::map< std::string, std::string > get(std::string msWhere, std::vector< std::string > mvKeys, std::string msCondition);
+        std::vector< std::map< std::string, std::string > > get(std::string msWhere, std::vector< std::string > mvKeys, std::string msCondition);
 
     private:
         databasedata();

@@ -32,6 +32,7 @@
 class glib
 {
     public:
+        static bool iequals(std::string, std::string);
 
         // time
         static std::string stringTimeFromIntSeconds(int miSeconds);
@@ -42,6 +43,7 @@ class glib
         // Conversion
         static std::string stringFromInt(int miInput);
         static int intFromString(std::string msInput);
+        static std::string toLower(std::string msInput);
 
         // Trim
         static std::string &ltrim(std::string &s);
