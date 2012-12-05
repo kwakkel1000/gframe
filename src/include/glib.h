@@ -1,7 +1,7 @@
 //
 //
 // @ Project : gframe
-// @ File Name : lib.h
+// @ File Name : glib.h
 // @ Date : 31-10-2012
 // @ Author : Gijs Kwakkel
 //
@@ -23,15 +23,16 @@
 //
 
 
-#ifndef SRC_INCLUDE_LIB_H
-#define SRC_INCLUDE_LIB_H
+#ifndef SRC_INCLUDE_GLIB_H
+#define SRC_INCLUDE_GLIB_H
 
 #include <string>
 #include <vector>
 
-class lib
+class glib
 {
     public:
+        static bool iequals(std::string, std::string);
 
         // time
         static std::string stringTimeFromIntSeconds(int miSeconds);
@@ -42,6 +43,7 @@ class lib
         // Conversion
         static std::string stringFromInt(int miInput);
         static int intFromString(std::string msInput);
+        static std::string toLower(std::string msInput);
 
         // Trim
         static std::string &ltrim(std::string &s);
@@ -49,11 +51,11 @@ class lib
         static std::string &trim(std::string &s);
 
     private:
-        lib();
-        ~lib();
+        glib();
+        ~glib();
 };
 
-#endif // SRC_INCLUDE_LIB_H
+#endif // SRC_INCLUDE_GLIB_H
 
 
 

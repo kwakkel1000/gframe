@@ -24,6 +24,7 @@
 
 #include <gframe/database/databasedata.h>
 #include <gframe/output.h>
+#include <gframe/glib.h>
 #include <chrono>
 
 databasedata::databasedata() : wait_time(300), a_last_query_time(time (NULL))
@@ -102,7 +103,39 @@ std::vector< std::string > databasedata::get(std::string msWhere, std::string ms
     return _vDataResult;
 }
 
-
+std::vector< std::map< std::string, std::string > > databasedata::get(std::string msWhere, std::vector< std::string > mvKeys, std::string msCondition)
+{
+    std::string _sSqlString;
+    _sSqlString = _sSqlString + "SELECT ";
+    _sSqlString = _sSqlString + " `";
+    for (unsigned int uiKeysIndex = 0; uiKeysIndex < mvKeys.size() -1; uiKeysIndex++)
+    {
+        _sSqlString = _sSqlString + mvKeys[uiKeysIndex];
+        _sSqlString = _sSqlString + "`, `";
+    }
+    if (mvKeys.size() >= 1)
+    {
+        _sSqlString = _sSqlString + mvKeys[mvKeys.size() -1];
+    }
+    _sSqlString = _sSqlString + "` FROM `";
+    _sSqlString = _sSqlString + msWhere;
+    _sSqlString = _sSqlString + "` WHERE ";
+    _sSqlString = _sSqlString + msCondition;
+    output::instance().addOutput(_sSqlString, 9);
+    std::vector< std::vector< std::string > > _vSqlResult;
+    std::vector< std::map < std::string, std::string > > _vDataResult;
+    _vSqlResult= raw_sql(_sSqlString);
+    for (unsigned int _uiSqlResultIndex = 0; _uiSqlResultIndex < _vSqlResult.size(); _uiSqlResultIndex++)
+    {
+        std::map< std::string, std::string > _mData;
+        for (unsigned int _uiSqlResultIndexIndex = 0; _uiSqlResultIndexIndex < _vSqlResult[_uiSqlResultIndex].size(); _uiSqlResultIndexIndex++)
+        {
+            _mData[glib::toLower(mvKeys[_uiSqlResultIndexIndex])] = _vSqlResult[_uiSqlResultIndex][_uiSqlResultIndexIndex];
+        }
+        _vDataResult.push_back(_mData);
+    }
+    return _vDataResult;
+}
 bool databasedata::del(std::string msWhere, std::string msCondition)
 {
     std::string _sSqlString;

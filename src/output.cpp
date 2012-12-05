@@ -24,7 +24,7 @@
 
 
 #include <gframe/output.h>
-#include <gframe/lib.h>
+#include <gframe/glib.h>
 #include <iostream>
 #include <sstream>
 #include <cstring>
@@ -72,7 +72,7 @@ void output::addOutput(std::string sOutput, int iLevel)
     std::lock_guard<std::mutex> outputlock(m_outputMutex);
     if (iLevel <= iOutputLevel)
     {
-        std::cout << "\033[1m\033[34m[\033[33m ** \033[34m] [\033[32m" << lib::stringFromInt(iLevel) << "\033[34m] \033[0m" << sOutput << std::endl;
+        std::cout << "\033[1m\033[34m[\033[33m ** \033[34m] [\033[32m" << glib::stringFromInt(iLevel) << "\033[34m] \033[0m" << sOutput << std::endl;
     }
     appendLog("[ ** ] " + sOutput, iLevel);
 }
@@ -89,7 +89,7 @@ void output::appendLog(std::string sOutput, int iLevel)
     {
         if (iLevel <= iLogLevel)
         {
-            fLogFile << "[" << sFormatTime("%d-%m-%Y %H:%M:%S") << "] [" << lib::stringFromInt(iLevel) << "] " << sOutput << std::endl;
+            fLogFile << "[" << sFormatTime("%d-%m-%Y %H:%M:%S") << "] [" << glib::stringFromInt(iLevel) << "] " << sOutput << std::endl;
         }
     }
 }

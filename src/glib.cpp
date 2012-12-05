@@ -1,7 +1,7 @@
 //
 //
 // @ Project : gframe
-// @ File Name : lib.cpp
+// @ File Name : glib.cpp
 // @ Date : 29-10-2012
 // @ Author : Gijs Kwakkel
 //
@@ -24,7 +24,7 @@
 
 
 
-#include <gframe/lib.h>
+#include <gframe/glib.h>
 
 #include <iostream>
 #include <sstream>
@@ -36,28 +36,33 @@
 #include <cctype>
 #include <locale>
 
+bool glib::iequals(std::string msInput1, std::string msInput2)
+{
+    return (toLower(msInput1) == toLower(msInput2));
+}
+
 // trim from start
-std::string &lib::ltrim(std::string &s) {
+std::string &glib::ltrim(std::string &s) {
         s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
         return s;
 }
 
 // trim from end
-std::string &lib::rtrim(std::string &s) {
+std::string &glib::rtrim(std::string &s) {
         s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
         return s;
 }
 
 // trim from both ends
-std::string &lib::trim(std::string &s) {
+std::string &glib::trim(std::string &s) {
         return ltrim(rtrim(s));
 }
 
-std::string lib::stringTimeFromIntSeconds(int _Seconds)
+std::string glib::stringTimeFromIntSeconds(int _Seconds)
 {
     return stringTimeFromIntSeconds(_Seconds, true);
 }
-std::string lib::stringTimeFromIntSeconds(int _Seconds, bool _WithWeeks=true)
+std::string glib::stringTimeFromIntSeconds(int _Seconds, bool _WithWeeks=true)
 {
     std::vector< int > _TimeVector = vectorTimeFromSecondsTime(_Seconds, _WithWeeks);
     if ((_WithWeeks && _TimeVector.size() == 6) || (!_WithWeeks && _TimeVector.size() == 5))
@@ -145,13 +150,17 @@ std::string lib::stringTimeFromIntSeconds(int _Seconds, bool _WithWeeks=true)
     return "";
 }
 
+std::string glib::toLower(std::string msInput)
+{
+    std::transform(msInput.begin(), msInput.end(), msInput.begin(), (int(*)(int)) std::tolower);
+    return msInput;
+}
 
-
-std::vector< int > lib::vectorTimeFromSecondsTime(int _Time)
+std::vector< int > glib::vectorTimeFromSecondsTime(int _Time)
 {
     return vectorTimeFromSecondsTime(_Time, true);
 }
-std::vector< int > lib::vectorTimeFromSecondsTime(int miTime, bool _WithWeeks=true)
+std::vector< int > glib::vectorTimeFromSecondsTime(int miTime, bool _WithWeeks=true)
 {
     // Year, Week, Day, Hour, Minutes, Seconds;
     // year (day * 365)
@@ -191,14 +200,14 @@ std::vector< int > lib::vectorTimeFromSecondsTime(int miTime, bool _WithWeeks=tr
 }
 
 
-std::string lib::stringFromInt(int miInput)
+std::string glib::stringFromInt(int miInput)
 {
     std::stringstream ssConversion;
     ssConversion << miInput;
     return ssConversion.str();
 }
 
-int lib::intFromString(std::string msInput)
+int glib::intFromString(std::string msInput)
 {
     int iOutput;
     std::stringstream ssConversion(msInput);
