@@ -247,6 +247,8 @@ void mainbase::parseArgs(std::vector<std::string> args)
 
 int mainbase::run()
 {
+    m_PidFile = m_PidFileLocation + m_Name + ".pid";
+    m_LogFile = m_LogFileLocation + m_Name + ".log";
     showVersion();
     if (readPidFile())
     {
