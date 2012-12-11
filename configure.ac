@@ -30,6 +30,7 @@ AX_CXX_COMPILE_STDCXX_11([noext])
 
 ########  begin socket    ##############
 
+have_ipv6="no"
 
 AC_ARG_ENABLE([socket],
   [  --enable-socket          Turn on build of gframe socket],
@@ -40,6 +41,22 @@ AC_ARG_ENABLE([socket],
   esac],
   [socket=no])
 AM_CONDITIONAL(SOCKET, test "x$socket" = "xyes")
+
+AC_ARG_ENABLE(ipv6,
+  [  --disable-ipv6           Turn off support of IPv6],
+  [case "${enableval}" in
+    yes) ipv6=yes ;;
+    no)  ipv6=no ;;
+    *) AC_MSG_ERROR([bad value ${enableval} for --disable-ipv6]) ;;
+  esac],
+  [ipv6=yes])
+AM_CONDITIONAL(IPV6, test "x$ipv6" = "xyes")
+
+if test "x$ipv6" = "xyes"; then
+  AC_DEFINE(HAVE_IPV6,1,[Define to 1 if IPv6 should be enabled.])
+  have_ipv6="yes"
+fi
+
 
 GFRAME_SOCKET_CPPFLAGS=""
 GFRAME_SOCKET_LDFLAGS=""
@@ -56,6 +73,8 @@ AC_SUBST(GFRAME_SOCKET_LIBS)
 ########  begin database    ##############
 
 
+have_db=no
+
 AC_ARG_ENABLE([database],
   [  --enable-database          Turn on build of gframe database],
   [case "${enableval}" in
@@ -65,8 +84,6 @@ AC_ARG_ENABLE([database],
   esac],
   [database=no])
 AM_CONDITIONAL(DATABASE, test "x$database" = "xyes")
-
-have_db=no
 
 dnl Checking for MySQL support
 AX_LIB_MYSQL()
@@ -160,49 +177,49 @@ AC_OUTPUT
 
 echo "
   ($PACKAGE_NAME) version $PACKAGE_VERSION
-  Prefix.........: $prefix
-  C++ Compiler...: $CXX $CXXFLAGS $CPPFLAGS
-  Linker.........: $LD $LDFLAGS $LIBS
+  Prefix..........:    $prefix
+  C++ Compiler....:    $CXX $CXXFLAGS $CPPFLAGS
+  Linker..........:    $LD $LDFLAGS $LIBS
 
 Configuration:
 
-  Detected OS:           ${host_os}
-  Install path:          ${prefix}
-  Compilation arch:      ${ARCH}
+  Detected OS.....:    ${host_os}
+  Install path....:    ${prefix}
+  Compilation arch:    ${ARCH}
 
-  Compiler:              ${CC}
-  Compiler flags:        ${CFLAGS}
+  Compiler........:    ${CC}
+  Compiler flags..:    ${CFLAGS}
+  
 
-  Linker flags:          $LDFLAGS $GFRAME_LDFLAGS
-  C++ Compiler:          $CXX $CXXFLAGS $CPPFLAGS $GFRAME_CPPFLAGS
-  Libraries:             $LIBS $GFRAME_LIBS
+  Gframe details:
+  Linker flags....:    $LDFLAGS $GFRAME_LDFLAGS
+  C++ Compiler....:    $CXX $CXXFLAGS $CPPFLAGS $GFRAME_CPPFLAGS
+  Libraries.......:    $LIBS $GFRAME_LIBS
 
-
-  Enable database:         ${database}"
+  Enable database:     ${database}"
 
 if test "x$database" != "xno"; then
 
 echo "  Database details:
-  Linker flags:          $LDFLAGS $GFRAME_DATABASE_LDFLAGS
-  C++ Compiler:          $CXX $CXXFLAGS $CPPFLAGS $GFRAME_DATABASE_CPPFLAGS
-  Libraries:             $LIBS $GFRAME_DATABASE_LIBS"
-
+  Linker flags....:    $LDFLAGS $GFRAME_DATABASE_LDFLAGS
+  C++ Compiler....:    $CXX $CXXFLAGS $CPPFLAGS $GFRAME_DATABASE_CPPFLAGS
+  Libraries.......:    $LIBS $GFRAME_DATABASE_LIBS
+  MySQL support...:    ${want_mysql}
+  SQLite3 support.:    ${WANT_SQLITE3}"
 fi
 
 echo "
-  Enable socket:           ${socket}"
+  Enable socket:       ${socket}"
 
 if test "x$socket" != "xno"; then
 
 echo "  Socket details:
-  Linker flags:          $LDFLAGS $GFRAME_SOCKET_LDFLAGS
-  C++ Compiler:          $CXX $CXXFLAGS $CPPFLAGS $GFRAME_SOCKET_CPPFLAGS
-  Libraries:             $LIBS $GFRAME_SOCKET_LIBS"
+  Linker flags....:    $LDFLAGS $GFRAME_SOCKET_LDFLAGS
+  C++ Compiler....:    $CXX $CXXFLAGS $CPPFLAGS $GFRAME_SOCKET_CPPFLAGS
+  Libraries.......:    $LIBS $GFRAME_SOCKET_LIBS
+  IPv6 support....:    ${have_ipv6}"
 
 fi
-
-echo "
-  IPv6 support:          ${have_ipv6}"
 
 echo
 echo "***********************************************************"

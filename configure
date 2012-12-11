@@ -660,6 +660,8 @@ DATABASE_TRUE
 GFRAME_SOCKET_LIBS
 GFRAME_SOCKET_LDFLAGS
 GFRAME_SOCKET_CPPFLAGS
+IPV6_FALSE
+IPV6_TRUE
 SOCKET_FALSE
 SOCKET_TRUE
 CXXCPP
@@ -793,6 +795,7 @@ with_gnu_ld
 with_sysroot
 enable_libtool_lock
 enable_socket
+enable_ipv6
 enable_database
 with_mysql
 with_sqlite3
@@ -1437,6 +1440,7 @@ Optional Features:
   --enable-dependency-tracking   do not reject slow dependency extractors
   --disable-libtool-lock  avoid locking (might break parallel builds)
   --enable-socket          Turn on build of gframe socket
+  --disable-ipv6           Turn off support of IPv6
   --enable-database          Turn on build of gframe database
 
 Optional Packages:
@@ -16210,6 +16214,7 @@ $as_echo "$ac_res" >&6; }
 
 ########  begin socket    ##############
 
+have_ipv6="no"
 
 # Check whether --enable-socket was given.
 if test "${enable_socket+set}" = set; then :
@@ -16231,6 +16236,34 @@ else
 fi
 
 
+# Check whether --enable-ipv6 was given.
+if test "${enable_ipv6+set}" = set; then :
+  enableval=$enable_ipv6; case "${enableval}" in
+    yes) ipv6=yes ;;
+    no)  ipv6=no ;;
+    *) as_fn_error $? "bad value ${enableval} for --disable-ipv6" "$LINENO" 5 ;;
+  esac
+else
+  ipv6=yes
+fi
+
+ if test "x$ipv6" = "xyes"; then
+  IPV6_TRUE=
+  IPV6_FALSE='#'
+else
+  IPV6_TRUE='#'
+  IPV6_FALSE=
+fi
+
+
+if test "x$ipv6" = "xyes"; then
+
+$as_echo "#define HAVE_IPV6 1" >>confdefs.h
+
+  have_ipv6="yes"
+fi
+
+
 GFRAME_SOCKET_CPPFLAGS=""
 GFRAME_SOCKET_LDFLAGS=""
 GFRAME_SOCKET_LIBS=""
@@ -16245,6 +16278,8 @@ GFRAME_SOCKET_LIBS=""
 
 ########  begin database    ##############
 
+
+have_db=no
 
 # Check whether --enable-database was given.
 if test "${enable_database+set}" = set; then :
@@ -16265,8 +16300,6 @@ else
   DATABASE_FALSE=
 fi
 
-
-have_db=no
 
 
     MYSQL_CONFIG="no"
@@ -17007,6 +17040,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${SOCKET_TRUE}" && test -z "${SOCKET_FALSE}"; then
   as_fn_error $? "conditional \"SOCKET\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${IPV6_TRUE}" && test -z "${IPV6_FALSE}"; then
+  as_fn_error $? "conditional \"IPV6\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${DATABASE_TRUE}" && test -z "${DATABASE_FALSE}"; then
@@ -19523,49 +19560,49 @@ fi
 
 echo "
   ($PACKAGE_NAME) version $PACKAGE_VERSION
-  Prefix.........: $prefix
-  C++ Compiler...: $CXX $CXXFLAGS $CPPFLAGS
-  Linker.........: $LD $LDFLAGS $LIBS
+  Prefix..........:    $prefix
+  C++ Compiler....:    $CXX $CXXFLAGS $CPPFLAGS
+  Linker..........:    $LD $LDFLAGS $LIBS
 
 Configuration:
 
-  Detected OS:           ${host_os}
-  Install path:          ${prefix}
-  Compilation arch:      ${ARCH}
+  Detected OS.....:    ${host_os}
+  Install path....:    ${prefix}
+  Compilation arch:    ${ARCH}
 
-  Compiler:              ${CC}
-  Compiler flags:        ${CFLAGS}
-
-  Linker flags:          $LDFLAGS $GFRAME_LDFLAGS
-  C++ Compiler:          $CXX $CXXFLAGS $CPPFLAGS $GFRAME_CPPFLAGS
-  Libraries:             $LIBS $GFRAME_LIBS
+  Compiler........:    ${CC}
+  Compiler flags..:    ${CFLAGS}
 
 
-  Enable database:         ${database}"
+  Gframe details:
+  Linker flags....:    $LDFLAGS $GFRAME_LDFLAGS
+  C++ Compiler....:    $CXX $CXXFLAGS $CPPFLAGS $GFRAME_CPPFLAGS
+  Libraries.......:    $LIBS $GFRAME_LIBS
+
+  Enable database:     ${database}"
 
 if test "x$database" != "xno"; then
 
 echo "  Database details:
-  Linker flags:          $LDFLAGS $GFRAME_DATABASE_LDFLAGS
-  C++ Compiler:          $CXX $CXXFLAGS $CPPFLAGS $GFRAME_DATABASE_CPPFLAGS
-  Libraries:             $LIBS $GFRAME_DATABASE_LIBS"
-
+  Linker flags....:    $LDFLAGS $GFRAME_DATABASE_LDFLAGS
+  C++ Compiler....:    $CXX $CXXFLAGS $CPPFLAGS $GFRAME_DATABASE_CPPFLAGS
+  Libraries.......:    $LIBS $GFRAME_DATABASE_LIBS
+  MySQL support...:    ${want_mysql}
+  SQLite3 support.:    ${WANT_SQLITE3}"
 fi
 
 echo "
-  Enable socket:           ${socket}"
+  Enable socket:       ${socket}"
 
 if test "x$socket" != "xno"; then
 
 echo "  Socket details:
-  Linker flags:          $LDFLAGS $GFRAME_SOCKET_LDFLAGS
-  C++ Compiler:          $CXX $CXXFLAGS $CPPFLAGS $GFRAME_SOCKET_CPPFLAGS
-  Libraries:             $LIBS $GFRAME_SOCKET_LIBS"
+  Linker flags....:    $LDFLAGS $GFRAME_SOCKET_LDFLAGS
+  C++ Compiler....:    $CXX $CXXFLAGS $CPPFLAGS $GFRAME_SOCKET_CPPFLAGS
+  Libraries.......:    $LIBS $GFRAME_SOCKET_LIBS
+  IPv6 support....:    ${have_ipv6}"
 
 fi
-
-echo "
-  IPv6 support:          ${have_ipv6}"
 
 echo
 echo "***********************************************************"
