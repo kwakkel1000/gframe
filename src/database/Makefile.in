@@ -54,7 +54,7 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 subdir = src/database
-DIST_COMMON = $(libgframe_database_include_HEADERS) \
+DIST_COMMON = $(am__libgframe_database_include_HEADERS_DIST) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_cxx_compile_stdcxx_11.m4 \
@@ -127,6 +127,11 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
+am__libgframe_database_include_HEADERS_DIST =  \
+	../include/database/mysqldatabase.h \
+	../include/database/sqlitedatabase.h \
+	../include/database/databasedata.h \
+	../include/database/database.h ../include/database.h
 HEADERS = $(libgframe_database_include_HEADERS)
 ETAGS = etags
 CTAGS = ctags
@@ -142,15 +147,12 @@ CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 CPP = @CPP@
-CPPFLAGS = @CPPFLAGS@ $(DATABASE_CPPFLAGS)
+CPPFLAGS = @CPPFLAGS@ $(GFRAME_DATABASE_CPPFLAGS)
 CXX = @CXX@
 CXXCPP = @CXXCPP@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
-DATABASE_CPPFLAGS = @DATABASE_CPPFLAGS@
-DATABASE_LDFLAGS = @DATABASE_LDFLAGS@
-DATABASE_LIBS = @DATABASE_LIBS@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 DLLTOOL = @DLLTOOL@
@@ -162,6 +164,15 @@ ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
 FGREP = @FGREP@
+GFRAME_CPPFLAGS = @GFRAME_CPPFLAGS@
+GFRAME_DATABASE_CPPFLAGS = @GFRAME_DATABASE_CPPFLAGS@
+GFRAME_DATABASE_LDFLAGS = @GFRAME_DATABASE_LDFLAGS@
+GFRAME_DATABASE_LIBS = @GFRAME_DATABASE_LIBS@
+GFRAME_LDFLAGS = @GFRAME_LDFLAGS@
+GFRAME_LIBS = @GFRAME_LIBS@
+GFRAME_SOCKET_CPPFLAGS = @GFRAME_SOCKET_CPPFLAGS@
+GFRAME_SOCKET_LDFLAGS = @GFRAME_SOCKET_LDFLAGS@
+GFRAME_SOCKET_LIBS = @GFRAME_SOCKET_LIBS@
 GREP = @GREP@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -169,9 +180,9 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LD = @LD@
-LDFLAGS = @LDFLAGS@
+LDFLAGS = @LDFLAGS@ $(GFRAME_DATABASE_LDFLAGS)
 LIBOBJS = @LIBOBJS@
-LIBS = @LIBS@ $(DATABASE_LIBS)
+LIBS = @LIBS@ $(GFRAME_DATABASE_LIBS)
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LN_S = @LN_S@
@@ -266,11 +277,15 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = -I ../../m4
+@MYSQL_TRUE@MYSQL_HEADER = ../include/database/mysqldatabase.h
 @MYSQL_TRUE@MYSQL_SOURCES = mysqldatabase.cpp
+@SQLITE3_TRUE@SQLITE3_HEADER = ../include/database/sqlitedatabase.h
 @SQLITE3_TRUE@SQLITE3_SOURCES = sqlitedatabase.cpp
 lib_LTLIBRARIES = libgframe_database.la
 libgframe_database_includedir = $(includedir)/gframe/database
 libgframe_database_include_HEADERS = \
+	$(MYSQL_HEADER) \
+	$(SQLITE3_HEADER) \
 	../include/database/databasedata.h \
 	../include/database/database.h \
 	../include/database.h

@@ -636,9 +636,12 @@ ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
-DATABASE_LIBS
-DATABASE_LDFLAGS
-DATABASE_CPPFLAGS
+GFRAME_LIBS
+GFRAME_LDFLAGS
+GFRAME_CPPFLAGS
+GFRAME_DATABASE_LIBS
+GFRAME_DATABASE_LDFLAGS
+GFRAME_DATABASE_CPPFLAGS
 SQLITE3_FALSE
 SQLITE3_TRUE
 SQLITE3_VERSION
@@ -654,6 +657,9 @@ MYSQL_VERSION
 MYSQL_CONFIG
 DATABASE_FALSE
 DATABASE_TRUE
+GFRAME_SOCKET_LIBS
+GFRAME_SOCKET_LDFLAGS
+GFRAME_SOCKET_CPPFLAGS
 SOCKET_FALSE
 SOCKET_TRUE
 CXXCPP
@@ -16107,7 +16113,7 @@ ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
-CXXFLAGS="$CXXFLAGS -D__GIT_VERSION=\\\"\${GIT_VERSION}\\\" -Wall"
+CXXFLAGS="$CXXFLAGS -Wall"
       ac_success=no
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CXX supports C++11 features by default" >&5
 $as_echo_n "checking whether $CXX supports C++11 features by default... " >&6; }
@@ -16223,6 +16229,12 @@ else
   SOCKET_TRUE='#'
   SOCKET_FALSE=
 fi
+
+
+GFRAME_SOCKET_CPPFLAGS=""
+GFRAME_SOCKET_LDFLAGS=""
+GFRAME_SOCKET_LIBS=""
+
 
 
 
@@ -16722,15 +16734,29 @@ $as_echo "ok" >&6; }
   fi
 fi
 
-DATABASE_CPPFLAGS="$IBM_DB2_CPPFLAGS $MYSQL_CFLAGS $ORACLE_CPPFLAGS $POSTGRESQL_CPPFLAGS $SQLITE3_CPPFLAGS"
-DATABASE_LDFLAGS="$IBM_DB2_LDFLAGS $MYSQL_LDFLAGS $ORACLE_LDFLAGS $POSTGRESQL_LDFLAGS $SQLITE3_LDFLAGS"
-DATABASE_LIBS="$IBM_DB2_LIBS $MYSQL_LIBS $ORACLE_LIBS $POSTGRESQL_LIBS $SQLITE3_LIBS"
+GFRAME_DATABASE_CPPFLAGS="$IBM_DB2_CPPFLAGS $MYSQL_CFLAGS $ORACLE_CPPFLAGS $POSTGRESQL_CPPFLAGS $SQLITE3_CPPFLAGS"
+GFRAME_DATABASE_LDFLAGS="$IBM_DB2_LDFLAGS $MYSQL_LDFLAGS $ORACLE_LDFLAGS $POSTGRESQL_LDFLAGS $SQLITE3_LDFLAGS"
+GFRAME_DATABASE_LIBS="$IBM_DB2_LIBS $MYSQL_LIBS $ORACLE_LIBS $POSTGRESQL_LIBS $SQLITE3_LIBS"
 
 
 
 
 
 ########  end database    ##############
+
+########  begin gframe    ##############
+
+
+
+GFRAME_CPPFLAGS=" -D__GIT_VERSION=\\\"\${GIT_VERSION}\\\""
+GFRAME_LDFLAGS=""
+GFRAME_LIBS=""
+
+
+
+
+
+########  end gframe    ##############
 
 
 # Checks for libraries.
@@ -19510,14 +19536,19 @@ Configuration:
   Compiler:              ${CC}
   Compiler flags:        ${CFLAGS}
 
+  Linker flags:          $LDFLAGS $GFRAME_LDFLAGS
+  C++ Compiler:          $CXX $CXXFLAGS $CPPFLAGS $GFRAME_CPPFLAGS
+  Libraries:             $LIBS $GFRAME_LIBS
+
+
   Enable database:         ${database}"
 
 if test "x$database" != "xno"; then
 
 echo "  Database details:
-    Linker flags:          $LDFLAGS $DATABASE_LDFLAGS
-    C++ Compiler:          $CXX $CXXFLAGS $CPPFLAGS $DATABASE_CPPFLAGS $DATABASE_CXXFLAGS
-    Libraries:             $LIBS $DATABASE_LIBS"
+  Linker flags:          $LDFLAGS $GFRAME_DATABASE_LDFLAGS
+  C++ Compiler:          $CXX $CXXFLAGS $CPPFLAGS $GFRAME_DATABASE_CPPFLAGS
+  Libraries:             $LIBS $GFRAME_DATABASE_LIBS"
 
 fi
 
@@ -19527,9 +19558,9 @@ echo "
 if test "x$socket" != "xno"; then
 
 echo "  Socket details:
-    Linker flags:          $LDFLAGS $SOCKET_LDFLAGS
-    C++ Compiler:          $CXX $CXXFLAGS $CPPFLAGS $SOCKET_CPPFLAGS $SOCKET_CXXFLAGS
-    Libraries:             $LIBS $SOCKET_LIBS"
+  Linker flags:          $LDFLAGS $GFRAME_SOCKET_LDFLAGS
+  C++ Compiler:          $CXX $CXXFLAGS $CPPFLAGS $GFRAME_SOCKET_CPPFLAGS
+  Libraries:             $LIBS $GFRAME_SOCKET_LIBS"
 
 fi
 
