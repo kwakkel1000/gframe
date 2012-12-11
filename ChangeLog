@@ -1,0 +1,9 @@
+10-12-2012  v1.15.0
+	* Makefile.am new
+	* configure.ac new
+	* AUTHORS new
+	* COPYING rename of LICENSE
+	* ChangeLog new
+	* INSTALL new
+	* NEWS new
+	* README new
