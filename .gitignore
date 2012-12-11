@@ -29,6 +29,4 @@ autom4te.cache/
 compile
 config.log
 config.status
-depcomp
-missing
 
