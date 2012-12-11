@@ -18,8 +18,7 @@ libgframe_database_include_HEADERS = \
 	$(MYSQL_HEADER) \
 	$(SQLITE3_HEADER) \
 	../include/database/databasedata.h \
-	../include/database/database.h \
-	../include/database.h
+	../include/database/database.h
 
 libgframe_database_la_SOURCES = \
 	$(MYSQL_SOURCES) \

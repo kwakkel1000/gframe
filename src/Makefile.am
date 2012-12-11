@@ -9,6 +9,7 @@ lib_LTLIBRARIES = libgframe.la
 libgframe_includedir = $(includedir)/gframe
 
 libgframe_include_HEADERS = \
+        include/database.h \
         include/configreader.h \
 	include/glib.h \
 	include/output.h \

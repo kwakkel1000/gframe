@@ -131,7 +131,7 @@ am__libgframe_database_include_HEADERS_DIST =  \
 	../include/database/mysqldatabase.h \
 	../include/database/sqlitedatabase.h \
 	../include/database/databasedata.h \
-	../include/database/database.h ../include/database.h
+	../include/database/database.h
 HEADERS = $(libgframe_database_include_HEADERS)
 ETAGS = etags
 CTAGS = ctags
@@ -287,8 +287,7 @@ libgframe_database_include_HEADERS = \
 	$(MYSQL_HEADER) \
 	$(SQLITE3_HEADER) \
 	../include/database/databasedata.h \
-	../include/database/database.h \
-	../include/database.h
+	../include/database/database.h
 
 libgframe_database_la_SOURCES = \
 	$(MYSQL_SOURCES) \
