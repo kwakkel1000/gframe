@@ -19,3 +19,18 @@ config.h*
 !config.h.in
 
 Makefile
+
+.libs/
+.deps/
+stamp-h1
+
+Makefile.old
+autom4te.cache/
+compile
+config.guess
+config.log
+config.status
+config.sub
+depcomp
+missing
+

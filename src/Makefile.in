@@ -55,7 +55,7 @@ host_triplet = @host@
 target_triplet = @target@
 subdir = src
 DIST_COMMON = $(libgframe_include_HEADERS) $(srcdir)/Makefile.am \
-	$(srcdir)/Makefile.in depcomp install-sh ltmain.sh missing
+	$(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_cxx_compile_stdcxx_11.m4 \
 	$(top_srcdir)/m4/ax_lib_mysql.m4 \
