@@ -477,7 +477,7 @@ void mainbase::showVersion()
             longeststring = m_VersionItems[Version_iterator].size();
         }
     }
-    std::string Block = "  ++++++";
+    std::string Block = " ++++++";
     for (unsigned int longeststring_Iterator = 0; longeststring_Iterator < longeststring; longeststring_Iterator++)
     {
         Block = Block + "+";
@@ -485,7 +485,7 @@ void mainbase::showVersion()
     output::instance().addStatus(true, Block);
     for (unsigned int Version_iterator = 0; Version_iterator < m_VersionItems.size(); Version_iterator++)
     {
-        std::string tmplength = "  +  " + m_VersionItems[Version_iterator];
+        std::string tmplength = " +  " + m_VersionItems[Version_iterator];
         for (unsigned int tmplength_Iterator = 0; tmplength_Iterator < (longeststring - m_VersionItems[Version_iterator].size()); tmplength_Iterator++)
         {
             tmplength = tmplength + " ";

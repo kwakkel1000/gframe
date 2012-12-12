@@ -65,7 +65,7 @@ void output::addStatus(bool bSuccess, std::string sOutput)
     {
         if (2 <= iOutputLevel)
         {
-            std::cout << "\033[1m\033[34m[\033[32m ok \033[34m]\033[39m\033[22m" << sOutput << std::endl;
+            std::cout << "\033[1m\033[34m[\033[32m ok \033[34m]\033[39m\033[22m " << sOutput << std::endl;
 #ifdef USE_SYSLOG
             appendSyslog("[ ok ] " + sOutput, 5);
 #endif
@@ -74,7 +74,7 @@ void output::addStatus(bool bSuccess, std::string sOutput)
     }
     else
     {
-        std::cout << "\033[1m\033[34m[\033[31m !! \033[34m]\033[39m\033[22m" << sOutput << std::endl;
+        std::cout << "\033[1m\033[34m[\033[31m !! \033[34m]\033[39m\033[22m " << sOutput << std::endl;
 #ifdef USE_SYSLOG
         appendSyslog("[ !! ] " + sOutput, 3);
 #endif
