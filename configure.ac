@@ -6,8 +6,8 @@ AC_INIT([GFRAME], [1.16], [VOID])
 AC_CANONICAL_TARGET
 AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE([foreign])
-AC_CONFIG_SRCDIR([src/include/mainbase.h])
-AC_CONFIG_HEADERS([src/include/config.h])
+AC_CONFIG_SRCDIR([src/gframe/mainbase.h])
+AC_CONFIG_HEADERS([src/gframe/config.h])
 AC_CONFIG_MACRO_DIR([m4])
 LT_PREREQ([2.2])
 LT_INIT([dlopen])

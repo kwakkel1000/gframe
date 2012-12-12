@@ -9,12 +9,12 @@ lib_LTLIBRARIES = libgframe.la
 libgframe_includedir = $(includedir)/gframe
 
 libgframe_include_HEADERS = \
-        include/database.h \
-        include/configreader.h \
-	include/glib.h \
-	include/output.h \
-	include/mainbase.h \
-	include/config.h
+        gframe/database.h \
+        gframe/configreader.h \
+	gframe/glib.h \
+	gframe/output.h \
+	gframe/mainbase.h \
+	gframe/config.h
 
 libgframe_la_SOURCES = \
         configreader.cpp \
