@@ -40,6 +40,9 @@ std::string NAME = "add std::string NAME in your code";
 std::string gNAME = "gframe";
 std::string gVERSION = __GIT_VERSION;
 
+void libgframe_is_present(void){}
+
+
 void SegFaultAction(int i_num, siginfo_t * i_info, void * i_val)
 {
     std::cout<< "SegFault Signal " << i_num << " caught..." << std::endl;

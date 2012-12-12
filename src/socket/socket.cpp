@@ -29,8 +29,7 @@
 #include <fcntl.h>
 #include <iostream>
 
-
-
+void libgframe_socket_is_present(void){}
 
 bool socketbase::bind ( const int port )
 {

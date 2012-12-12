@@ -42,6 +42,10 @@
 #include <gframe/output.h>
 #include <gframe/configreader.h>
 
+extern "C" {
+    void libgframe_is_present(void);
+}
+
 void SegFaultAction(int i_num, siginfo_t * i_info, void * i_val);
 void TermAction(int i_num, siginfo_t * i_info, void * i_val);
 void Usr1Action(int i_num, siginfo_t * i_info, void * i_val);

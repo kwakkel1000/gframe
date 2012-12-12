@@ -1,7 +1,6 @@
 ## Process this file with automake to produce Makefile.in
-GIT_VERSION = $(shell sh -c 'git describe --abbrev=4 --dirty --always')
-ACLOCAL_AMFLAGS = -I m4
 
+ACLOCAL_AMFLAGS = -I m4
 
 if SOCKET
   SOCKET_SUBDIRS = src/socket
@@ -20,4 +19,3 @@ SUBDIRS = \
         $(SOCKET_SUBDIRS) \
         $(DATABASE_SUBDIRS) \
 	src
-

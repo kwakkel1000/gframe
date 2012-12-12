@@ -27,6 +27,8 @@
 #include <gframe/glib.h>
 #include <chrono>
 
+void libgframe_database_is_present(void){}
+
 databasedata::databasedata() : wait_time(300), a_last_query_time(time (NULL))
 {
 }

@@ -272,7 +272,6 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-GIT_VERSION = $(shell sh -c 'git describe --abbrev=4 --dirty --always')
 ACLOCAL_AMFLAGS = -I m4
 @SOCKET_TRUE@SOCKET_SUBDIRS = src/socket
 @DATABASE_TRUE@DATABASE_SUBDIRS = src/database
