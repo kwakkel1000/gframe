@@ -22,3 +22,5 @@ SUBDIRS = \
         man \
 	src
 
+update:
+	git pull
