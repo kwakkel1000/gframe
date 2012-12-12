@@ -13,9 +13,12 @@ endif
 DIST_SUBDIRS = \
         src/socket \
         src/database \
+        man \
 	src
 
 SUBDIRS = \
         $(SOCKET_SUBDIRS) \
         $(DATABASE_SUBDIRS) \
+        man \
 	src
+

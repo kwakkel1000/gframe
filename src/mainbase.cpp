@@ -31,7 +31,6 @@
 #include <string>
 #include <sstream>
 #include <cstring>
-#include <iostream>
 #include <vector>
 #include <grp.h>
 #include <pwd.h>
@@ -46,26 +45,32 @@ std::string gVERSION = __GIT_VERSION;
 
 void SegFaultAction(int i_num, siginfo_t * i_info, void * i_val)
 {
-    std::cout<< "SegFault Signal " << i_num << " caught..." << std::endl;
+    output::instance().addStatus(false, "SegFault Action");
+    output::instance().addOutput("SegFault Signal " + glib::stringFromInt(i_num) + " caught...", 4);
+    output::instance().addOutput("si_signo:   " + glib::stringFromInt(i_info->si_signo) + "    = Signal number", 4);
+    output::instance().addOutput("si_pid:     " + glib::stringFromInt(i_info->si_pid) + "    = Sending process ID", 4);
+    output::instance().addOutput("si_errno:   " + glib::stringFromInt(i_info->si_errno) + "    = An errno value", 4);
+    output::instance().addOutput("si_code:    " + glib::stringFromInt(i_info->si_code) + "    = Signal code", 4);
+    output::instance().addOutput("si_uid:     " + glib::stringFromInt(i_info->si_uid) + "     = Real user ID of sending process", 4);
+    output::instance().addOutput("si_status:  " + glib::stringFromInt(i_info->si_status) + "    = Exit value or signal", 4);
 
-    const siginfo_t & v = * i_info;
-
-    std::cout << v.si_signo << "= Signal number\n";
-    std::cout << v.si_errno << "= An errno value\n";
-    std::cout << v.si_code << "= Signal code\n";
-    std::cout << v.si_pid << "= Sending process ID\n";
-    std::cout << v.si_uid << "= Real user ID of sending process\n";
-    std::cout << v.si_status << "= Exit value or signal\n";
 #if defined(linux) || defined(__linux) || defined(__linux__)
-    std::cout << v.si_utime << "= User time consumed\n";
-    std::cout << v.si_stime << "= System time consumed\n";
-    std::cout << v.si_int << "= POSIX.1b signal\n";
-    std::cout << v.si_ptr << "= POSIX.1b signal\n";
+    std::ostringstream ost_ptr;
+    ost_ptr << i_info->si_ptr;
+    std::string ssi_ptr = ost_ptr.str();
+    output::instance().addOutput("si_utime:   " + glib::stringFromInt(i_info->si_utime) + "    = User time consumed", 4);
+    output::instance().addOutput("si_stime:   " + glib::stringFromInt(i_info->si_stime) + "    = System time consumed", 4);
+    output::instance().addOutput("si_int:     " + glib::stringFromInt(i_info->si_int) + "    = POSIX.1b signal", 4);
+    output::instance().addOutput("si_ptr:     " + ssi_ptr + "    = POSIX.1b signal", 4);
 #endif
-    std::cout << v.si_addr << "= Memory location which caused fault\n";
-    std::cout << v.si_band << "= Band event\n";
+// SegFault specific (probably)
+    std::ostringstream ost_addr;
+    ost_addr << i_info->si_addr;
+    std::string ssi_addr=ost_addr.str();
+    output::instance().addOutput("si_addr:    " + ssi_addr + "    = Memory location which caused fault", 4);
+    output::instance().addOutput("si_band:    " + glib::stringFromInt(i_info->si_band) + "    = Band event", 4);
 #if defined(linux) || defined(__linux) || defined(__linux__)
-    std::cout << v.si_fd << "= File descriptor\n";
+    output::instance().addOutput("si_fd:      " + glib::stringFromInt(i_info->si_fd) + "    = File descriptor", 4);
 #endif
 
     throw * i_info;
@@ -74,23 +79,47 @@ void SegFaultAction(int i_num, siginfo_t * i_info, void * i_val)
 
 void TermAction(int i_num, siginfo_t * i_info, void * i_val)
 {
-    std::cout << "Term Signal " << i_num << " caught..." << std::endl;
-    std::cout << "from pid:   " << i_info->si_pid << std::endl;
-    std::cout << "si_errno:   " << i_info->si_errno << std::endl;
-    std::cout << "si_code:    " << i_info->si_code << std::endl;
-    std::cout << "si_uid:     " << i_info->si_uid << std::endl;
-    std::cout << "si_status:  " << i_info->si_status << std::endl;
+    output::instance().addStatus(false, "Term Action");
+    output::instance().addOutput("Term Signal " + glib::stringFromInt(i_num) + " caught...", 4);
+    output::instance().addOutput("si_signo:   " + glib::stringFromInt(i_info->si_signo) + "    = Signal number", 4);
+    output::instance().addOutput("si_pid:     " + glib::stringFromInt(i_info->si_pid) + "    = Sending process ID", 4);
+    output::instance().addOutput("si_errno:   " + glib::stringFromInt(i_info->si_errno) + "    = An errno value", 4);
+    output::instance().addOutput("si_code:    " + glib::stringFromInt(i_info->si_code) + "    = Signal code", 4);
+    output::instance().addOutput("si_uid:     " + glib::stringFromInt(i_info->si_uid) + "     = Real user ID of sending process", 4);
+    output::instance().addOutput("si_status:  " + glib::stringFromInt(i_info->si_status) + "    = Exit value or signal", 4);
+
+#if defined(linux) || defined(__linux) || defined(__linux__)
+    std::ostringstream ost_ptr;
+    ost_ptr << i_info->si_ptr;
+    std::string ssi_ptr = ost_ptr.str();
+    output::instance().addOutput("si_utime:   " + glib::stringFromInt(i_info->si_utime) + "    = User time consumed", 4);
+    output::instance().addOutput("si_stime:   " + glib::stringFromInt(i_info->si_stime) + "    = System time consumed", 4);
+    output::instance().addOutput("si_int:     " + glib::stringFromInt(i_info->si_int) + "    = POSIX.1b signal", 4);
+    output::instance().addOutput("si_ptr:     " + ssi_ptr + "    = POSIX.1b signal", 4);
+#endif
     exit(0);
 }
 
 void Usr1Action(int i_num, siginfo_t * i_info, void * i_val)
 {
-    std::cout<< "User Signal " << i_num << " caught..." << std::endl;
-    std::cout << "from pid:   " << i_info->si_pid << std::endl;
-    std::cout << "si_errno:   " << i_info->si_errno << std::endl;
-    std::cout << "si_code:    " << i_info->si_code << std::endl;
-    std::cout << "si_uid:     " << i_info->si_uid << std::endl;
-    std::cout << "si_status:  " << i_info->si_status << std::endl;
+    output::instance().addStatus(true, "USR1 Action (logrotate)");
+    output::instance().addOutput("User Signal " + glib::stringFromInt(i_num) + " caught...", 4);
+    output::instance().addOutput("si_signo:   " + glib::stringFromInt(i_info->si_signo) + "    = Signal number", 4);
+    output::instance().addOutput("si_pid:     " + glib::stringFromInt(i_info->si_pid) + "    = Sending process ID", 4);
+    output::instance().addOutput("si_errno:   " + glib::stringFromInt(i_info->si_errno) + "    = An errno value", 4);
+    output::instance().addOutput("si_code:    " + glib::stringFromInt(i_info->si_code) + "    = Signal code", 4);
+    output::instance().addOutput("si_uid:     " + glib::stringFromInt(i_info->si_uid) + "     = Real user ID of sending process", 4);
+    output::instance().addOutput("si_status:  " + glib::stringFromInt(i_info->si_status) + "    = Exit value or signal", 4);
+
+#if defined(linux) || defined(__linux) || defined(__linux__)
+    std::ostringstream ost_ptr;
+    ost_ptr << i_info->si_ptr;
+    std::string ssi_ptr = ost_ptr.str();
+    output::instance().addOutput("si_utime:   " + glib::stringFromInt(i_info->si_utime) + "    = User time consumed", 4);
+    output::instance().addOutput("si_stime:   " + glib::stringFromInt(i_info->si_stime) + "    = System time consumed", 4);
+    output::instance().addOutput("si_int:     " + glib::stringFromInt(i_info->si_int) + "    = POSIX.1b signal", 4);
+    output::instance().addOutput("si_ptr:     " + ssi_ptr + "    = POSIX.1b signal", 4);
+#endif
     output::instance().closeLog();
     usleep(1000000);
     output::instance().openLog();

@@ -16324,7 +16324,6 @@ $as_echo "$ac_res" >&6; }
   fi
 
 
-
 # Checks for libraries.
 
 # Checks for header files.
@@ -17336,7 +17335,7 @@ GFRAME_LIBS=""
 ########  end gframe    ##############
 
 
-ac_config_files="$ac_config_files Makefile src/Makefile src/database/Makefile src/socket/Makefile"
+ac_config_files="$ac_config_files Makefile man/Makefile src/Makefile src/database/Makefile src/socket/Makefile"
 
 
 
@@ -18468,6 +18467,7 @@ do
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "libtool") CONFIG_COMMANDS="$CONFIG_COMMANDS libtool" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
+    "man/Makefile") CONFIG_FILES="$CONFIG_FILES man/Makefile" ;;
     "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
     "src/database/Makefile") CONFIG_FILES="$CONFIG_FILES src/database/Makefile" ;;
     "src/socket/Makefile") CONFIG_FILES="$CONFIG_FILES src/socket/Makefile" ;;

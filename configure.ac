@@ -27,7 +27,6 @@ AC_LANG([C++])
 CXXFLAGS="$CXXFLAGS -Wall"
 AX_CXX_COMPILE_STDCXX_11([noext])
 
-
 # Checks for libraries.
 
 # Checks for header files.
@@ -193,6 +192,7 @@ AC_SUBST(GFRAME_LIBS)
 
 
 AC_CONFIG_FILES([Makefile
+                 man/Makefile
                  src/Makefile
                  src/database/Makefile
                  src/socket/Makefile])

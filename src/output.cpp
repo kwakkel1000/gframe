@@ -137,7 +137,10 @@ void output::appendSyslog(std::string sOutput, int iLevel)
             default:
                 facility = LOG_DEBUG;
         }
-        syslog(facility, sOutput.c_str());
+        if (iLevel <= iLogLevel)
+        {
+            syslog(facility, sOutput.c_str());
+        }
     }
 #endif
 }

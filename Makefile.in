@@ -279,11 +279,13 @@ ACLOCAL_AMFLAGS = -I m4
 DIST_SUBDIRS = \
         src/socket \
         src/database \
+        man \
 	src
 
 SUBDIRS = \
         $(SOCKET_SUBDIRS) \
         $(DATABASE_SUBDIRS) \
+        man \
 	src
 
 all: all-recursive
