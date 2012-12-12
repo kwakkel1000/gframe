@@ -39,12 +39,9 @@
 #include <string>
 #include <vector>
 
+#include <gframe/glib.h>
 #include <gframe/output.h>
 #include <gframe/configreader.h>
-
-extern "C" {
-    void libgframe_is_present(void);
-}
 
 void SegFaultAction(int i_num, siginfo_t * i_info, void * i_val);
 void TermAction(int i_num, siginfo_t * i_info, void * i_val);
@@ -85,6 +82,7 @@ class mainbase
         std::string m_Uid;
         std::string m_Gid;
         std::string m_Name;
+        std::string m_Syslog;
         std::string m_LogFileLocation;
         std::string m_PidFileLocation;
         std::string m_IniFile;

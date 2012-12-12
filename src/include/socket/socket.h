@@ -39,10 +39,6 @@
 
 #define BUFLEN 16384
 
-extern "C" {
-    void libgframe_socket_is_present(void);
-}
-
 class socketbase
 {
     public:

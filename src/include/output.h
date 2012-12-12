@@ -26,12 +26,15 @@
 #ifndef SRC_INCLUDE_OUTPUT_H
 #define SRC_INCLUDE_OUTPUT_H
 
+#include "config.h"
+
 #include <mutex>
 #include <thread>
-
 #include <string>
-
 #include <fstream>
+#ifdef USE_SYSLOG
+    #include <syslog.h>
+#endif
 
 class output
 {
@@ -43,7 +46,9 @@ class output
         }
 
         void setDebugLevel(int level);
+        void setLogLevel(int level);
         void setLogFile(std::string msLogFile);
+        void setSyslog(std::string msSyslog);
 
         void openLog();
         void closeLog();
@@ -51,6 +56,8 @@ class output
         void addStatus(bool bSuccess, std::string sOutput);
         void addOutput(std::string sOutput);
         void addOutput(std::string sOutput, int iLevel);
+        void appendSyslog(std::string sOutput);
+        void appendSyslog(std::string sOutput, int iLevel);
         void appendLog(std::string sOutput);
         void appendLog(std::string sOutput, int iLevel);
 
@@ -63,11 +70,14 @@ class output
         int iLogLevel;
         int iOutputLevel;
 
+        std::string sSyslog;
+
         std::string sLogFile;
         std::ofstream fLogFile;
 
         std::mutex m_outputMutex;
         std::mutex m_logMutex;
+        std::mutex m_syslogMutex;
 };
 
 #endif // SRC_INCLUDE_OUTPUT_H_

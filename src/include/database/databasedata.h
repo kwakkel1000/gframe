@@ -40,10 +40,6 @@
 #include <map>
 #include <time.h>
 
-extern "C" {
-    void libgframe_database_is_present(void);
-}
-
 class databasedata
 {
     public:

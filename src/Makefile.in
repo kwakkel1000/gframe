@@ -66,7 +66,7 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_cxx_compile_stdcxx_11.m4 \
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
-CONFIG_HEADER = $(top_builddir)/config.h
+CONFIG_HEADER = $(top_builddir)/src/include/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
@@ -103,7 +103,7 @@ libgframe_la_LIBADD =
 am_libgframe_la_OBJECTS = configreader.lo glib.lo output.lo \
 	mainbase.lo
 libgframe_la_OBJECTS = $(am_libgframe_la_OBJECTS)
-DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
+DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/src/include
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 am__mv = mv -f
@@ -276,7 +276,8 @@ libgframe_include_HEADERS = \
         include/configreader.h \
 	include/glib.h \
 	include/output.h \
-	include/mainbase.h
+	include/mainbase.h \
+	include/config.h
 
 libgframe_la_SOURCES = \
         configreader.cpp \

@@ -13,7 +13,8 @@ libgframe_include_HEADERS = \
         include/configreader.h \
 	include/glib.h \
 	include/output.h \
-	include/mainbase.h
+	include/mainbase.h \
+	include/config.h
 
 libgframe_la_SOURCES = \
         configreader.cpp \
@@ -24,4 +25,3 @@ libgframe_la_SOURCES = \
 CPPFLAGS += $(GFRAME_CPPFLAGS)
 LDFLAGS += $(GFRAME_LDFLAGS)
 LIBS += $(GFRAME_LIBS)
-

@@ -23,11 +23,11 @@
 //
 
 #include <gframe/configreader.h>
+#include <gframe/output.h>
 #include <gframe/glib.h>
 #include <algorithm>
 #include <cctype>
 #include <string>
-#include <iostream>
 #include <fstream>
 
 configreader::configreader()
@@ -61,7 +61,7 @@ bool configreader::readFile()
 }
 bool configreader::readFile(std::string _ConfigFile)
 {
-    std::cout << "readfile: " << _ConfigFile << std::endl;
+    output::instance().addOutput("readfile: " +  _ConfigFile);
     std::string line;
     std::string section("global"); // default value
     std::ifstream configfile;
@@ -89,11 +89,11 @@ bool configreader::readFile(std::string _ConfigFile)
                     {
                         // Changing section...
                         section = line.substr(1, line.length()-2);
-                        std::cout << "* Changed section to '" << section << "'" << std::endl;
+                        output::instance().addOutput("* Changed section to '" + section + "'", 6);
                     }
                     else
                     {
-                        std::cout << "Invalid section on line " << linenr << ": " << line << std::endl;
+                        output::instance().addStatus(false, "Invalid section on line " + glib::stringFromInt(linenr) + ": " + line);
                     }
                 }
                 else
@@ -125,12 +125,12 @@ bool configreader::readFile(std::string _ConfigFile)
             }
         }
         configfile.close();
-        std::cout << "done reading: " << _ConfigFile << std::endl;
+        output::instance().addStatus(true, "done reading: " + _ConfigFile);
         return true;
     }
     else
     {
-        std::cout << "Could not open file '" << _ConfigFile << "'" << std::endl;
+        output::instance().addStatus(false, "Could not open file: " + _ConfigFile);
     }
 
     return false;

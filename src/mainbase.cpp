@@ -36,12 +36,13 @@
 #include <grp.h>
 #include <pwd.h>
 
-std::string NAME = "add std::string NAME in your code";
+extern "C" void libgframe_is_present(void)
+{
+}
+
+std::string _NAME = "add std::string _NAME in your code";
 std::string gNAME = "gframe";
 std::string gVERSION = __GIT_VERSION;
-
-void libgframe_is_present(void){}
-
 
 void SegFaultAction(int i_num, siginfo_t * i_info, void * i_val)
 {
@@ -144,7 +145,8 @@ mainbase::mainbase() :
 m_INeedRoot(false),
 m_DropRoot(false),
 m_Foreground(false),
-m_Name(NAME),
+m_Name(_NAME),
+m_Syslog(m_Name),
 m_LogFileLocation("log/"),
 m_PidFileLocation("/var/run/" + m_Name + "/"),
 m_IniFile("conf/" + m_Name + ".ini"),
@@ -152,6 +154,8 @@ m_PidFile(m_PidFileLocation + m_Name + ".pid"),
 m_LogFile(m_LogFileLocation + m_Name + ".log")
 {
     SetupSignal();
+    addVersion("Copyright (c) 2012 Gijs Kwakkel");
+    addVersion("GNU Version 2");
     addVersion(gNAME + " " + gVERSION);
     addHelpItem("Runs the " + m_Name + " (default as " + m_Name + ", " + m_PidFile + ", " + m_LogFile + " " + m_IniFile + ")");
     addHelpItem("USAGE " + m_Name + " [OPTIONS]");
@@ -163,6 +167,7 @@ m_LogFile(m_LogFileLocation + m_Name + ".log")
     addHelpItem("\t-c, --config Set config file (default: " + m_IniFile + ")");
     addHelpItem("\t-d, --debug Set debug level [1-10] (default: 5)");
     addHelpItem("\t-p, --pid Set Pid file location (default: " + m_PidFileLocation + ")");
+    addHelpItem("\t-s, --syslog Set syslog name (default: " + m_Syslog + ")");
     addHelpItem("\t-l, --log Set log file location (default: " + m_LogFileLocation + ")");
     addHelpItem("\t-n, --name Set name for pid/log files (default: " + m_Name + ")");
     addHelpItem("\t--INeedRootPowerz Requered when running as root (not needed when droproot is specified)");
@@ -227,6 +232,13 @@ void mainbase::parseArgs(std::vector<std::string> args)
                 m_PidFileLocation = args[nArg];
             }
         }
+        else if (args[nArg] == "--syslog" || args[nArg] == "-s")
+        {
+            if ((++nArg) < args.size())
+            {
+                m_Syslog = args[nArg];
+            }
+        }
         else if (args[nArg] == "--log" || args[nArg] == "-l")
         {
             if ((++nArg) < args.size())
@@ -261,14 +273,14 @@ int mainbase::run()
     createDirectory(m_PidFileLocation);
     if (isRoot() && !m_DropRoot)
     {
-        fprintf(stdout, "Your are running %s as root!\n", m_Name.c_str());
-        fprintf(stdout, "this is dangerouse and can cause great damage!\n");
+        output::instance().addOutput("You are running " + m_Name + "as root!", 4);
+        output::instance().addOutput("This is dangerouse and can cause great damage!", 4);
         if (!m_INeedRoot) {
             return 1;
         }
-        fprintf(stdout, "You have been warned.\n");
-        fprintf(stdout, "Hit CTRL+C now if you don't want to run %s as root.\n", m_Name.c_str());
-        fprintf(stdout, "%s will start in 15 seconds.\n", m_Name.c_str());
+        output::instance().addOutput("You have been warned", 4);
+        output::instance().addOutput("Hit CTRL+C now if you don't want to run " + m_Name + " as root.", 4);
+        output::instance().addOutput(m_Name + " will start in 15 seconds.", 4);
         sleep(15);
     }
     if (m_DropRoot)
@@ -285,6 +297,7 @@ int mainbase::run()
         return DaemonizeStatus;
     }
     output::instance().setLogFile(m_LogFile);
+    output::instance().setSyslog(m_Syslog);
     output::instance().openLog();
     std::string startBlock = "+++++++++++++++++++++++++++++++++";
     for (unsigned int m_Name_Iterator = 0; m_Name_Iterator < m_Name.size(); m_Name_Iterator++)
@@ -308,7 +321,8 @@ bool mainbase::createDirectory(std::string directory)
     if (stat(directory.c_str(), &sb) != 0)
     {
         umask(0);
-        printf("creating %s\r\n", directory.c_str());
+        output::instance().addStatus(true, "creating " + directory);
+//        printf("creating %s\r\n", directory.c_str());
         mkdir(directory.c_str(), S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO);
         return true;
     }
@@ -316,7 +330,8 @@ bool mainbase::createDirectory(std::string directory)
     {
         if (!S_ISDIR(sb.st_mode))
         {
-            printf("%s exists but is not a directory!\r\n", directory.c_str());
+            output::instance().addStatus(false, directory + "exists but is not a directory!");
+//            printf("%s exists but is not a directory!\r\n", directory.c_str());
             return false;
         }
     }
@@ -343,7 +358,8 @@ bool mainbase::readPidFile()
     ss >> iFilePid;
     if (kill(iFilePid, 0) != -1)
     {
-        printf("still running \r\n");
+        output::instance().addStatus(false, "Still running");
+//        printf("still running \r\n");
         return true;
         //exit(EXIT_FAILURE);
     }
@@ -355,12 +371,14 @@ void mainbase::writePidFile(int Pid)
 {
     // write current pid to pidfile
     if (Pid < 0) {
-        printf("pid < 0 FAIL \r\n");
+        output::instance().addStatus(false, "pid <0 FAIL");
+//        printf("pid < 0 FAIL \r\n");
         exit(EXIT_FAILURE);
     }
 
     std::ofstream ofPidFile (m_PidFile.c_str());
-    printf("%s\n", m_PidFile.c_str());
+    output::instance().addOutput(m_PidFile);
+//    printf("%s\n", m_PidFile.c_str());
     if (ofPidFile.is_open())
     {
         ofPidFile << Pid;
@@ -368,7 +386,8 @@ void mainbase::writePidFile(int Pid)
     }
     else
     {
-        printf("cant open pid file \r\n");
+        output::instance().addStatus(false, "cant open pid file");
+//        printf("cant open pid file \r\n");
         exit(EXIT_FAILURE);
     }
     // end writing pid file
@@ -450,12 +469,31 @@ bool mainbase::dropRoot()
 
 void mainbase::showVersion()
 {
-    std::cout << "Copyright (c) 2012 Gijs Kwakkel" << std::endl;
-    std::cout << "GNU Version 2" << std::endl;
+    unsigned int longeststring = 0;
     for (unsigned int Version_iterator = 0; Version_iterator < m_VersionItems.size(); Version_iterator++)
     {
-        std::cout << m_VersionItems[Version_iterator] << std::endl;
+        if (m_VersionItems[Version_iterator].size() > longeststring)
+        {
+            longeststring = m_VersionItems[Version_iterator].size();
+        }
     }
+    std::string Block = "  ++++++";
+    for (unsigned int longeststring_Iterator = 0; longeststring_Iterator < longeststring; longeststring_Iterator++)
+    {
+        Block = Block + "+";
+    }
+    output::instance().addStatus(true, Block);
+    for (unsigned int Version_iterator = 0; Version_iterator < m_VersionItems.size(); Version_iterator++)
+    {
+        std::string tmplength = "  +  " + m_VersionItems[Version_iterator];
+        for (unsigned int tmplength_Iterator = 0; tmplength_Iterator < (longeststring - m_VersionItems[Version_iterator].size()); tmplength_Iterator++)
+        {
+            tmplength = tmplength + " ";
+        }
+        tmplength = tmplength + "  +";
+        output::instance().addStatus(true, tmplength);
+    }
+    output::instance().addStatus(true, Block);
 }
 
 void mainbase::addVersion(std::string VersionItem)
@@ -467,7 +505,7 @@ void mainbase::showHelp()
 {
     for (unsigned int HelpItems_iterator = 0; HelpItems_iterator < m_HelpItems.size(); HelpItems_iterator++)
     {
-        std::cout << m_HelpItems[HelpItems_iterator] << std::endl;
+        output::instance().addOutput(m_HelpItems[HelpItems_iterator]);
     }
 }
 
@@ -482,24 +520,24 @@ int mainbase::daemonize(bool Daemonize)
     {
         int Pid = getpid();
         writePidFile(Pid);
-        fprintf(stdout, "Staying open for debugging\n");
-        fprintf(stdout, "pid [%d]\n", Pid);
+        output::instance().addOutput("Staying open for debugging");
+        output::instance().addOutput("pid [" + glib::stringFromInt(Pid) + "]");
     }
     else
     {
-        fprintf(stdout, "Forking into the background\n");
+        output::instance().addOutput("Forking into the background");
 
         int Pid = fork();
 
         if (Pid == -1) {
-            fprintf(stderr, "%s\n", strerror(errno));
+            output::instance().addStatus(false, strerror(errno));
             return 1;
         }
 
         if (Pid > 0) {
             // We are the parent. We are done and will go to bed.
             writePidFile(Pid);
-            fprintf(stdout, "pid [%d]\n", Pid);
+            output::instance().addStatus(true, "pid [" + glib::stringFromInt(Pid) + "]");
             return 0;
         }
         // Redirect std in/out/err to /dev/null
@@ -512,7 +550,7 @@ int mainbase::daemonize(bool Daemonize)
         setsid();
         // Now we are in our own process group and session (no
         // controlling terminal). We are independent!
-        fprintf(stdout, "child running\n");
+        output::instance().addStatus(true, "child running");
     }
     return -1;
 }

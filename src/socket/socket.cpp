@@ -29,7 +29,9 @@
 #include <fcntl.h>
 #include <iostream>
 
-void libgframe_socket_is_present(void){}
+extern "C" void libgframe_socket_is_present(void)
+{
+}
 
 bool socketbase::bind ( const int port )
 {

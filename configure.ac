@@ -6,8 +6,8 @@ AC_INIT([GFRAME], [VERSION], [BUG-REPORT-ADDRESS])
 AC_CANONICAL_TARGET
 AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE([foreign])
-AC_CONFIG_SRCDIR([config.h.in])
-AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_SRCDIR([src/include/config.h.in])
+AC_CONFIG_HEADERS([src/include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
 LT_PREREQ([2.2])
 LT_INIT([dlopen])
@@ -27,6 +27,19 @@ AC_LANG([C++])
 CXXFLAGS="$CXXFLAGS -Wall"
 AX_CXX_COMPILE_STDCXX_11([noext])
 
+
+# Checks for libraries.
+
+# Checks for header files.
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h stdlib.h string.h sys/socket.h syslog.h unistd.h], [], AC_MSG_ERROR([missing required header(s)]))
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_CHECK_HEADER_STDBOOL
+
+# Checks for library functions.
+AC_CHECK_FUNCS([mkdir])
+AC_CHECK_FUNCS([strerror])
+AC_FUNC_FORK
 
 ########  begin socket    ##############
 
@@ -57,10 +70,17 @@ if test "x$ipv6" = "xyes"; then
   have_ipv6="yes"
 fi
 
-
 GFRAME_SOCKET_CPPFLAGS=""
 GFRAME_SOCKET_LDFLAGS=""
 GFRAME_SOCKET_LIBS=""
+
+if test "x$socket" = "xyes"; then
+  AC_CHECK_FUNCS([memset])
+  AC_CHECK_FUNCS([select])
+  AC_CHECK_FUNCS([socket])
+  AC_CHECK_FUNCS([strchr])
+fi
+
 AC_SUBST(GFRAME_SOCKET_CPPFLAGS)
 AC_SUBST(GFRAME_SOCKET_LDFLAGS)
 AC_SUBST(GFRAME_SOCKET_LIBS)
@@ -146,6 +166,21 @@ AC_SUBST(GFRAME_DATABASE_LIBS)
 
 
 
+AC_ARG_ENABLE(syslog,
+  [  --disable-syslog           Turn off support of syslog],
+  [case "${enableval}" in
+    yes) syslog=yes ;;
+    no)  syslog=no ;;
+    *) AC_MSG_ERROR([bad value ${enableval} for --disable-syslog]) ;;
+  esac],
+  [syslog=yes])
+AM_CONDITIONAL(SYSLOG, test "x$syslog" = "xyes")
+
+if test "x$syslog" = "xyes"; then
+  AC_DEFINE(USE_SYSLOG,1,[Define to 1 if syslog should be enabled.])
+  use_syslog="yes"
+fi
+
 GFRAME_CPPFLAGS=" -D__GIT_VERSION=\\\"\${GIT_VERSION}\\\""
 GFRAME_LDFLAGS=""
 GFRAME_LIBS=""
@@ -156,16 +191,6 @@ AC_SUBST(GFRAME_LIBS)
 
 ########  end gframe    ##############
 
-
-# Checks for libraries.
-
-# Checks for header files.
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h stdlib.h string.h sys/socket.h syslog.h unistd.h])
-
-# Checks for typedefs, structures, and compiler characteristics.
-AC_CHECK_HEADER_STDBOOL
-
-# Checks for library functions.
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile
@@ -195,6 +220,7 @@ Configuration:
   Linker flags....:    $LDFLAGS $GFRAME_LDFLAGS
   C++ Compiler....:    $CXX $CXXFLAGS $CPPFLAGS $GFRAME_CPPFLAGS
   Libraries.......:    $LIBS $GFRAME_LIBS
+  Syslog..........:    ${syslog}
 
   Enable database:     ${database}"
 
