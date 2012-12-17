@@ -22,6 +22,6 @@ libgframe_la_SOURCES = \
         output.cpp \
         mainbase.cpp
 
-CPPFLAGS += $(GFRAME_CPPFLAGS)
-LDFLAGS += $(GFRAME_LDFLAGS)
+libgframe_la_CPPFLAGS = $(GFRAME_CPPFLAGS)
+libgframe_la_LDFLAGS = $(GFRAME_LDFLAGS)
 LIBS += $(GFRAME_LIBS)

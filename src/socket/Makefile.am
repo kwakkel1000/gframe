@@ -15,6 +15,6 @@ libgframe_socket_la_SOURCES = \
 	udpsocket.cpp \
 	socket.cpp
 
-CPPFLAGS += $(GFRAME_SOCKET_CPPFLAGS) -I../
-LDFLAGS += $(GFRAME_SOCKET_LDFLAGS)
+libgframe_socket_la_CPPFLAGS = $(GFRAME_SOCKET_CPPFLAGS)
+libgframe_socket_la_LDFLAGS = $(GFRAME_SOCKET_LDFLAGS)
 LIBS += $(GFRAME_SOCKET_LIBS)

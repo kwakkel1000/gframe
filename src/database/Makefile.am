@@ -25,6 +25,6 @@ libgframe_database_la_SOURCES = \
 	$(SQLITE3_SOURCES) \
 	databasedata.cpp
 
-CPPFLAGS += $(GFRAME_DATABASE_CPPFLAGS) -I../
-LDFLAGS += $(GFRAME_DATABASE_LDFLAGS)
+libgframe_database_la_CPPFLAGS = $(GFRAME_DATABASE_CPPFLAGS)
+libgframe_database_la_LDFLAGS = $(GFRAME_DATABASE_LDFLAGS)
 LIBS += $(GFRAME_DATABASE_LIBS)
