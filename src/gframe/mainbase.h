@@ -50,7 +50,7 @@ void Usr1Action(int i_num, siginfo_t * i_info, void * i_val);
 class mainbase
 {
     public:
-        mainbase();
+        mainbase(std::string name);
         ~mainbase();
 
         void parseArgs(std::vector<std::string> args);

@@ -23,6 +23,7 @@
 //
 
 #include <gframe/mainbase.h>
+#include <gframe/config.h>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -39,9 +40,9 @@ extern "C" void libgframe_is_present(void)
 {
 }
 
-std::string _NAME = "add std::string _NAME in your code";
-std::string gNAME = "gframe";
-std::string gVERSION = __GIT_VERSION;
+std::string gNAME = PACKAGE_NAME;
+std::string gVERSION = VERSION;
+std::string gGITVERSION = __GIT_VERSION;
 
 void SegFaultAction(int i_num, siginfo_t * i_info, void * i_val)
 {
@@ -170,11 +171,10 @@ void mainbase::SetupSignal()
 }
 
 
-mainbase::mainbase() :
+mainbase::mainbase(std::string name) :
 m_INeedRoot(false),
 m_DropRoot(false),
 m_Foreground(false),
-m_Name(_NAME),
 m_Syslog(m_Name),
 m_LogFileLocation("log/"),
 m_PidFileLocation("/var/run/" + m_Name + "/"),
@@ -182,10 +182,11 @@ m_IniFile("conf/" + m_Name + ".ini"),
 m_PidFile(m_PidFileLocation + m_Name + ".pid"),
 m_LogFile(m_LogFileLocation + m_Name + ".log")
 {
+    m_Name = name;
     SetupSignal();
     addVersion("Copyright (c) 2012 Gijs Kwakkel");
     addVersion("GNU Version 2");
-    addVersion(gNAME + " " + gVERSION);
+    addVersion(gNAME + " " + gVERSION + " " + gGITVERSION);
     addHelpItem("Runs the " + m_Name + " (default as " + m_Name + ", " + m_PidFile + ", " + m_LogFile + " " + m_IniFile + ")");
     addHelpItem("USAGE " + m_Name + " [OPTIONS]");
     addHelpItem("Available options:");
