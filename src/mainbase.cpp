@@ -174,15 +174,15 @@ void mainbase::SetupSignal()
 mainbase::mainbase(std::string name) :
 m_INeedRoot(false),
 m_DropRoot(false),
-m_Foreground(false),
-m_Syslog(m_Name),
-m_LogFileLocation("log/"),
-m_PidFileLocation("/var/run/" + m_Name + "/"),
-m_IniFile("conf/" + m_Name + ".ini"),
-m_PidFile(m_PidFileLocation + m_Name + ".pid"),
-m_LogFile(m_LogFileLocation + m_Name + ".log")
+m_Foreground(false)
 {
     m_Name = name;
+    m_Syslog = m_Name;
+    m_LogFileLocation = "log/";
+    m_PidFileLocation = "/var/run/" + m_Name + "/";
+    m_IniFile = "conf/" + m_Name + ".ini";
+    m_PidFile = m_PidFileLocation + m_Name + ".pid";
+    m_LogFile = m_LogFileLocation + m_Name + ".log";
     SetupSignal();
     addVersion("Copyright (c) 2012 Gijs Kwakkel");
     addVersion("GNU Version 2");
