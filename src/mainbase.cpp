@@ -40,7 +40,7 @@ extern "C" void libgframe_is_present(void)
 {
 }
 
-std::string gNAME = PACKAGE_NAME;
+std::string gNAME = PACKAGE;
 std::string gVERSION = VERSION;
 std::string gGITVERSION = __GIT_VERSION;
 

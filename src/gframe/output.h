@@ -26,15 +26,10 @@
 #ifndef SRC_INCLUDE_OUTPUT_H
 #define SRC_INCLUDE_OUTPUT_H
 
-#include "config.h"
-
 #include <mutex>
 #include <thread>
 #include <string>
 #include <fstream>
-#ifdef USE_SYSLOG
-    #include <syslog.h>
-#endif
 
 class output
 {

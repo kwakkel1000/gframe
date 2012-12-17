@@ -24,12 +24,16 @@
 
 #include <gframe/output.h>
 #include <gframe/glib.h>
+#include <gframe/config.h>
 #include <iostream>
 #include <sstream>
 #include <cstring>
 #include <string>
 
 #include <fstream>
+#ifdef USE_SYSLOG
+    #include <syslog.h>
+#endif
 
 void output::setDebugLevel(int iLevel)
 {
