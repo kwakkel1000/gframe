@@ -59,9 +59,6 @@ class mainbase
         void showHelp();
         void addHelpItem(std::string HelpItem);
 
-        void showVersion();
-        void addVersion(std::string VersionItem);
-
     private:
 
         void SetupSignal();
@@ -88,9 +85,7 @@ class mainbase
         std::string m_IniFile;
         std::string m_PidFile;
         std::string m_LogFile;
-        std::vector<std::string> m_HelpItems;
-        std::vector<std::string> m_VersionItems;
-
+        std::vector< std::string > m_HelpItems;
 };
 
 #endif // SRC_INCLUDE_MAINBASE_H

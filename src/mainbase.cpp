@@ -24,6 +24,7 @@
 
 #include <gframe/mainbase.h>
 #include <gframe/config.h>
+#include <gframe/versions.h>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -184,9 +185,9 @@ m_Foreground(false)
     m_PidFile = m_PidFileLocation + m_Name + ".pid";
     m_LogFile = m_LogFileLocation + m_Name + ".log";
     SetupSignal();
-    addVersion("Copyright (c) 2012 Gijs Kwakkel");
-    addVersion("GNU Version 2");
-    addVersion(gNAME + " " + gVERSION + " " + gGITVERSION);
+    versions::instance().addVersion("Copyright (c) 2012 Gijs Kwakkel");
+    versions::instance().addVersion("GNU Version 2");
+    versions::instance().addVersion(gNAME + " " + gVERSION + " " + gGITVERSION);
     addHelpItem("Runs the " + m_Name + " (default as " + m_Name + ", " + m_PidFile + ", " + m_LogFile + " " + m_IniFile + ")");
     addHelpItem("USAGE " + m_Name + " [OPTIONS]");
     addHelpItem("Available options:");
@@ -219,7 +220,7 @@ void mainbase::parseArgs(std::vector<std::string> args)
         }
         else if (args[nArg] == "--version" || args[nArg] == "-v")
         {
-            showVersion();
+            versions::instance().showVersion();
             exit(EXIT_SUCCESS);
         }
         else if (args[nArg] == "--foreground" || args[nArg] == "-f")
@@ -294,7 +295,7 @@ int mainbase::run()
 {
     m_PidFile = m_PidFileLocation + m_Name + ".pid";
     m_LogFile = m_LogFileLocation + m_Name + ".log";
-    showVersion();
+    versions::instance().showVersion();
     if (readPidFile())
     {
         return 1;
@@ -495,40 +496,6 @@ bool mainbase::dropRoot()
         return true;
     }
     return true;
-}
-
-void mainbase::showVersion()
-{
-    unsigned int longeststring = 0;
-    for (unsigned int Version_iterator = 0; Version_iterator < m_VersionItems.size(); Version_iterator++)
-    {
-        if (m_VersionItems[Version_iterator].size() > longeststring)
-        {
-            longeststring = m_VersionItems[Version_iterator].size();
-        }
-    }
-    std::string Block = " ++++++";
-    for (unsigned int longeststring_Iterator = 0; longeststring_Iterator < longeststring; longeststring_Iterator++)
-    {
-        Block = Block + "+";
-    }
-    output::instance().addStatus(true, Block);
-    for (unsigned int Version_iterator = 0; Version_iterator < m_VersionItems.size(); Version_iterator++)
-    {
-        std::string tmplength = " +  " + m_VersionItems[Version_iterator];
-        for (unsigned int tmplength_Iterator = 0; tmplength_Iterator < (longeststring - m_VersionItems[Version_iterator].size()); tmplength_Iterator++)
-        {
-            tmplength = tmplength + " ";
-        }
-        tmplength = tmplength + "  +";
-        output::instance().addStatus(true, tmplength);
-    }
-    output::instance().addStatus(true, Block);
-}
-
-void mainbase::addVersion(std::string VersionItem)
-{
-    m_VersionItems.push_back(VersionItem);
 }
 
 void mainbase::showHelp()

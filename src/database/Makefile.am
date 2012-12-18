@@ -10,6 +10,8 @@ if SQLITE3
   SQLITE3_SOURCES = sqlitedatabase.cpp
 endif
 
+GFRAME_DATABASE_LIBRARY_VERSION=1:0:0
+
 lib_LTLIBRARIES = libgframe_database.la
 
 libgframe_database_includedir = $(includedir)/gframe/database
@@ -26,5 +28,5 @@ libgframe_database_la_SOURCES = \
 	databasedata.cpp
 
 libgframe_database_la_CPPFLAGS = $(GFRAME_DATABASE_CPPFLAGS)
-libgframe_database_la_LDFLAGS = $(GFRAME_DATABASE_LDFLAGS)
+libgframe_database_la_LDFLAGS = $(GFRAME_DATABASE_LDFLAGS) -version-info $(GFRAME_DATABASE_LIBRARY_VERSION)
 LIBS += $(GFRAME_DATABASE_LIBS)

@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([GFRAME], [1.17], [VOID])
+AC_INIT([GFRAME], [2.0], [VOID])
 AC_CANONICAL_TARGET
 AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE()

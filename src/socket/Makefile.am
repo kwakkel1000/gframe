@@ -3,6 +3,8 @@ ACLOCAL_AMFLAGS = -I ../../m4
 
 lib_LTLIBRARIES = libgframe_socket.la
 
+GFRAME_SOCKET_LIBRARY_VERSION=1:0:0
+
 libgframe_socket_includedir = $(includedir)/gframe/socket
 
 libgframe_socket_include_HEADERS = \
@@ -16,5 +18,6 @@ libgframe_socket_la_SOURCES = \
 	socket.cpp
 
 libgframe_socket_la_CPPFLAGS = $(GFRAME_SOCKET_CPPFLAGS)
-libgframe_socket_la_LDFLAGS = $(GFRAME_SOCKET_LDFLAGS)
+libgframe_socket_la_LDFLAGS = $(GFRAME_SOCKET_LDFLAGS) -version-info $(GFRAME_SOCKET_LIBRARY_VERSION)
 LIBS += $(GFRAME_SOCKET_LIBS)
+
