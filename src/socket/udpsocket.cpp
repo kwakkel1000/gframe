@@ -25,7 +25,7 @@
 
 // Implementation of the udpsocket class.
 
-
+#include <gframe/config.h>
 #include <gframe/socket/udpsocket.h>
 #include "string.h"
 #include <string.h>
@@ -36,7 +36,11 @@
 udpsocket::udpsocket()
 {
     m_sock = -1;
+#ifdef HAVE_IPV6
+    memset ( &m_addr6, 0, sizeof ( m_addr6 ) );
+#else
     memset ( &m_addr, 0, sizeof ( m_addr ) );
+#endif
 }
 
 udpsocket::~udpsocket()
@@ -47,11 +51,16 @@ udpsocket::~udpsocket()
 
 bool udpsocket::create()
 {
+#ifdef HAVE_IPV6
     m_sock = socket ( AF_INET6, SOCK_DGRAM, IPPROTO_UDP );
-
+#else
+    m_sock = socket ( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
+#endif
     if ( ! is_valid() )
         return false;
+#ifdef HAVE_IPV6
     if ( ! set_v6only(0) )
         return false;
+#endif
     return true;
 }

@@ -22,6 +22,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 //
 
+#include <gframe/config.h>
 #include <gframe/socket/socket.h>
 #include <gframe/output.h>
 #include <gframe/glib.h>
@@ -41,12 +42,19 @@ bool socketbase::bind ( const int port )
     {
         return false;
     }
+#ifdef HAVE_IPV6
+    m_addr6.sin6_family = AF_INET6;
+    m_addr6.sin6_addr = in6addr_any;
+    m_addr6.sin6_port = htons ( port );
 
-    m_addr.sin6_family = AF_INET6;
-    m_addr.sin6_addr = in6addr_any;
-    m_addr.sin6_port = htons ( port );
+    int bind_return = ::bind ( m_sock, ( struct sockaddr * ) &m_addr6, sizeof ( m_addr6 ) );
+#else
+    m_addr.sin_family = AF_INET;
+    m_addr.sin_addr.s_addr = INADDR_ANY;
+    m_addr.sin_port = htons ( port );
 
     int bind_return = ::bind ( m_sock, ( struct sockaddr * ) &m_addr, sizeof ( m_addr ) );
+#endif
 
     if ( bind_return == -1 )
     {
@@ -148,15 +156,25 @@ bool socketbase::connect ( const std::string host, const int port )
 {
     if ( ! is_valid() ) return false;
 
-    m_addr.sin6_family = AF_INET6;
-    m_addr.sin6_port = htons ( port );
+#ifdef HAVE_IPV6
+    m_addr6.sin6_family = AF_INET6;
+    m_addr6.sin6_port = htons ( port );
 
-    int status = inet_pton ( AF_INET6, host.c_str(), &m_addr.sin6_addr );
+    int status = inet_pton ( AF_INET6, host.c_str(), &m_addr6.sin6_addr );
+
+    if ( errno == EAFNOSUPPORT ) return false;
+
+    status = ::connect ( m_sock, ( sockaddr * ) &m_addr6, sizeof ( m_addr6 ) );
+#else
+    m_addr.sin_family = AF_INET;
+    m_addr.sin_port = htons ( port );
+
+    int status = inet_pton ( AF_INET, host.c_str(), &m_addr.sin_addr );
 
     if ( errno == EAFNOSUPPORT ) return false;
 
     status = ::connect ( m_sock, ( sockaddr * ) &m_addr, sizeof ( m_addr ) );
-
+#endif
     if ( status == 0 )
         return true;
     else

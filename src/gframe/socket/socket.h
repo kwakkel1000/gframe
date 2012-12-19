@@ -35,7 +35,6 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
-//#include <iostream>
 
 #define BUFLEN 16384
 
@@ -66,7 +65,11 @@ class socketbase
     protected:
 
         int m_sock;
-        struct sockaddr_in6 m_addr;
+#ifdef HAVE_IPV6
+        struct sockaddr_in6 m_addr6;
+#else
+        struct sockaddr_in m_addr;
+#endif
 };
 
 #endif // GFRAME_SOCKET_SOCKET_H

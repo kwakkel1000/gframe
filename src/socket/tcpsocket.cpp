@@ -22,6 +22,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 //
 
+#include <gframe/config.h>
 #include <gframe/socket/tcpsocket.h>
 #include "string.h"
 #include <string.h>
@@ -34,7 +35,11 @@
 tcpsocket::tcpsocket()
 {
     m_sock = -1;
+#ifdef HAVE_IPV6
+    memset ( &m_addr6, 0, sizeof ( m_addr6 ) );
+#else
     memset ( &m_addr, 0, sizeof ( m_addr ) );
+#endif
 }
 
 tcpsocket::~tcpsocket()
@@ -45,12 +50,18 @@ tcpsocket::~tcpsocket()
 
 bool tcpsocket::create()
 {
+#ifdef HAVE_IPV6
     m_sock = socket ( PF_INET6, SOCK_STREAM, IPPROTO_TCP );
+#else
+    m_sock = socket ( PF_INET, SOCK_STREAM, IPPROTO_TCP );
+#endif
 
     if ( ! is_valid() )
         return false;
+#ifdef HAVE_IPV6
     if ( ! set_v6only(0) )
         return false;
+#endif
     if ( ! set_reusable(1) )
         return false;
     return true;
@@ -232,16 +243,29 @@ int tcpsocket::select_listen(std::string& data, int& nclient)
     /* A read event on the socket is a new connection */
     if (FD_ISSET(m_sock, &read_fds))
     {
+#ifdef HAVE_IPV6
+        socklen_t socklen = sizeof(m_addr6);
+        /* Accept the new connection */
+        rval = ::accept(m_sock, (struct sockaddr *) &m_addr6, &socklen);
+        if (rval == -1)
+        {
+            (void) inet_ntop(m_addr6.sin6_family, m_addr6.sin6_addr.s6_addr, buf, BUFLEN);
+            //(void) snprintf(s, BUFLEN, "V6 Accept failed for %s %d\0", buf, m_addr.sin6_port);
+            (void) snprintf(s, BUFLEN, "V6 Accept failed for %s %d", buf, m_addr6.sin6_port);
+            perror(s);
+        }
+#else
         socklen_t socklen = sizeof(m_addr);
         /* Accept the new connection */
         rval = ::accept(m_sock, (struct sockaddr *) &m_addr, &socklen);
         if (rval == -1)
         {
-            (void) inet_ntop(m_addr.sin6_family, m_addr.sin6_addr.s6_addr, buf, BUFLEN);
+            (void) inet_ntop(m_addr.sin_family, &(m_addr.sin_addr), buf, BUFLEN);  // << faulty
             //(void) snprintf(s, BUFLEN, "V6 Accept failed for %s %d\0", buf, m_addr.sin6_port);
-            (void) snprintf(s, BUFLEN, "V6 Accept failed for %s %d", buf, m_addr.sin6_port);
+            (void) snprintf(s, BUFLEN, "V4 Accept failed for %s %d", buf, m_addr.sin_port);
             perror(s);
         }
+#endif
         else
         {
             /* Too many clients? */
@@ -256,9 +280,15 @@ int tcpsocket::select_listen(std::string& data, int& nclient)
                 /* Add client to list of clients */
                 clients[nclients++] = rval;
                 if (rval > maxfd) maxfd = rval;
-                (void) inet_ntop(m_addr.sin6_family, m_addr.sin6_addr.s6_addr, buf, BUFLEN);
+#ifdef HAVE_IPV6
+                (void) inet_ntop(m_addr6.sin6_family, m_addr6.sin6_addr.s6_addr, buf, BUFLEN);
                 snprintf(s, BUFLEN, "Accepted V6 connection from %s %d as %d\n",
-                buf, m_addr.sin6_port, rval);
+                buf, m_addr6.sin6_port, rval);
+#else
+                (void) inet_ntop(m_addr.sin_family, &(m_addr.sin_addr), buf, BUFLEN); // << faulty
+                snprintf(s, BUFLEN, "Accepted V4 connection from %s %d as %d\n",
+                buf, m_addr.sin_port, rval);
+#endif
                 //snprintf(s, BUFLEN, "You are client %d [%d]. You are now connected.\n\0", nclients, rval);
                 snprintf(s, BUFLEN, "You are client %d [%d]. You are now connected.\n", nclients, rval);
                 ::send(rval, s, strnlen(s, BUFLEN), MSG_DONTWAIT);
