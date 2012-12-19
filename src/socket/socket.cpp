@@ -99,7 +99,7 @@ int socketbase::recv ( std::string& data ) const
     data = "";
     //char c;
     //char temp[1024*1024];
-    char buffer[1024*1024*32];
+    char buffer[1024*1024];
 
     // Keep reading up to a '\n' or '\r'
 
