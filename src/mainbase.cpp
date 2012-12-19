@@ -353,7 +353,6 @@ bool mainbase::createDirectory(std::string directory)
     {
         umask(0);
         output::instance().addStatus(true, "creating " + directory);
-//        printf("creating %s\r\n", directory.c_str());
         mkdir(directory.c_str(), S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO);
         return true;
     }
@@ -362,7 +361,6 @@ bool mainbase::createDirectory(std::string directory)
         if (!S_ISDIR(sb.st_mode))
         {
             output::instance().addStatus(false, directory + "exists but is not a directory!");
-//            printf("%s exists but is not a directory!\r\n", directory.c_str());
             return false;
         }
     }
@@ -390,7 +388,6 @@ bool mainbase::readPidFile()
     if (kill(iFilePid, 0) != -1)
     {
         output::instance().addStatus(false, "Still running");
-//        printf("still running \r\n");
         return true;
         //exit(EXIT_FAILURE);
     }
@@ -403,13 +400,11 @@ void mainbase::writePidFile(int Pid)
     // write current pid to pidfile
     if (Pid < 0) {
         output::instance().addStatus(false, "pid <0 FAIL");
-//        printf("pid < 0 FAIL \r\n");
         exit(EXIT_FAILURE);
     }
 
     std::ofstream ofPidFile (m_PidFile.c_str());
     output::instance().addOutput(m_PidFile);
-//    printf("%s\n", m_PidFile.c_str());
     if (ofPidFile.is_open())
     {
         ofPidFile << Pid;
@@ -418,7 +413,6 @@ void mainbase::writePidFile(int Pid)
     else
     {
         output::instance().addStatus(false, "cant open pid file");
-//        printf("cant open pid file \r\n");
         exit(EXIT_FAILURE);
     }
     // end writing pid file

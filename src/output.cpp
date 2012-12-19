@@ -188,6 +188,7 @@ void output::openLog()
 #endif
     if (sLogFile != "")
     {
+        std::cout << sLogFile.c_str() << std::endl;
         fLogFile.open(sLogFile.c_str(), std::ios::app);
         fLogFile << "\r\n\r\n\r\n\r\nopen logfile\r\n";
     }

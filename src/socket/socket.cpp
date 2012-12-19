@@ -24,6 +24,7 @@
 
 #include <gframe/socket/socket.h>
 #include <gframe/output.h>
+#include <gframe/glib.h>
 #include "string.h"
 #include <string.h>
 #include <errno.h>
@@ -94,25 +95,32 @@ bool socketbase::send ( const std::string s ) const
 
 int socketbase::recv ( std::string& data ) const
 {
-    int n = 1, total = 0, found = 0;
+    int status = -1, total = 0, found = 0;
+    data = "";
     //char c;
-    char temp[1024*1024];
+    //char temp[1024*1024];
+    char buffer[1024*1024*32];
 
-    // Keep reading up to a '\n'
+    // Keep reading up to a '\n' or '\r'
 
-    while (!found) {
-        n = ::recv(m_sock, &temp[total], sizeof(temp) - total - 1, 0);
-        if (n == -1) {
+    while ( !found ) {
+        status = ::recv(m_sock, &buffer[total], sizeof(buffer) - total - 1, 0);
+        if ( status == -1 ) {
+            output::instance().addStatus(false, "status == -1   errno == " + glib::stringFromInt(errno) + "  in socketbase::recv");
             /* Error, check 'errno' for more details */
-            break;
+            //break;
+            return 0;
         }
-        total += n;
-        temp[total] = '\0';
-        found = (strchr(temp, '\n') != 0);
+        else if ( status == 0 )
+        {
+            return 0;
+        }
+        total += status;
+        buffer[total] = '\0';
+        found = (strchr(buffer, '\n') != 0);
     }
-
-    data = temp;
-    return 1;
+    data = buffer;
+    return status;
 }
 
 const socketbase& socketbase::operator >> ( std::string& data ) const
