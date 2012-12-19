@@ -30,7 +30,9 @@
 #include <cstring>
 #include <string>
 
-#include <fstream>
+#ifdef USE_FILELOG
+    #include <fstream>
+#endif
 #ifdef USE_SYSLOG
     #include <syslog.h>
 #endif
@@ -73,7 +75,9 @@ void output::addStatus(bool bSuccess, std::string sOutput)
 #ifdef USE_SYSLOG
             appendSyslog("[ ok ] " + sOutput, 5);
 #endif
+#ifdef USE_FILELOG
             appendLog("[ ok ] " + sOutput, 2);
+#endif
         }
     }
     else
@@ -82,7 +86,9 @@ void output::addStatus(bool bSuccess, std::string sOutput)
 #ifdef USE_SYSLOG
         appendSyslog("[ !! ] " + sOutput, 3);
 #endif
+#ifdef USE_FILELOG
         appendLog("[ !! ] " + sOutput, 1);
+#endif
     }
 }
 
@@ -98,14 +104,20 @@ void output::addOutput(std::string sOutput, int iLevel)
     {
         std::cout << "\033[1m\033[34m[\033[33m ** \033[34m] [\033[32m" << glib::stringFromInt(iLevel) << "\033[34m] \033[0m" << sOutput << std::endl;
     }
+#ifdef USE_SYSLOG
     appendLog("[ ** ] " + sOutput, iLevel);
+#endif
+#ifdef USE_SYSLOG
     appendSyslog("[ ** ] " + sOutput, iLevel);
+#endif
 }
 
 
 void output::appendSyslog(std::string sOutput)
 {
+#ifdef USE_SYSLOG
     appendSyslog(sOutput, 6);
+#endif
 }
 
 void output::appendSyslog(std::string sOutput, int iLevel)
@@ -151,12 +163,15 @@ void output::appendSyslog(std::string sOutput, int iLevel)
 
 void output::appendLog(std::string sOutput)
 {
+#ifdef USE_FILELOG
     appendLog(sOutput, 5);
+#endif
 }
 
 void output::appendLog(std::string sOutput, int iLevel)
 {
     std::lock_guard<std::mutex> loglock(m_logMutex);
+#ifdef USE_FILELOG
     if (sLogFile != "")
     {
         if (iLevel <= iLogLevel)
@@ -164,6 +179,7 @@ void output::appendLog(std::string sOutput, int iLevel)
             fLogFile << "[" << sFormatTime("%d-%m-%Y %H:%M:%S") << "] [" << glib::stringFromInt(iLevel) << "] " << sOutput << std::endl;
         }
     }
+#endif
 }
 
 std::string output::sFormatTime(std::string sFormat)
@@ -187,12 +203,14 @@ void output::openLog()
         addOutput("syslog: " + sSyslog, 2);
     }
 #endif
+#ifdef USE_FILELOG
     if (sLogFile != "")
     {
         addOutput("logfile: " + sLogFile, 2);
         fLogFile.open(sLogFile.c_str(), std::ios::app);
         fLogFile << "\r\n\r\n\r\n\r\nopen logfile\r\n";
     }
+#endif
 }
 
 void output::closeLog()
@@ -200,8 +218,10 @@ void output::closeLog()
 #ifdef USE_SYSLOG
     closelog();
 #endif
+#ifdef USE_FILELOG
     fLogFile << "closing logfile \r\n\r\n\r\n\r\n";
     fLogFile.close();
+#endif
 }
 
 output::output() : iLogLevel(10), iOutputLevel(5), sSyslog(""), sLogFile("")

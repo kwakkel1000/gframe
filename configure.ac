@@ -180,6 +180,26 @@ if test "x$syslog" = "xyes"; then
   use_syslog="yes"
 fi
 
+AC_ARG_ENABLE(filelog,
+  [AS_HELP_STRING([--enable-filelog], [use filelog (default is no if syslog is used)])],
+  [case "${enableval}" in
+    yes) filelog=yes ;;
+    no)  filelog=no ;;
+    *) AC_MSG_ERROR([bad value ${enableval} for --enable-filelog]) ;;
+  esac],
+  [case "${syslog}" in
+    yes) filelog=no ;;
+    no)  filelog=yes ;;
+    *) filelog=no ;;
+  esac])
+
+AM_CONDITIONAL(FILELOG, test "x$filelog" = "xyes")
+
+if test "x$filelog" = "xyes"; then
+  AC_DEFINE(USE_FILELOG,1,[Define to 1 if filelog should be enabled.])
+  use_filelog="yes"
+fi
+
 GFRAME_CPPFLAGS=" -D__GIT_VERSION=\\\"\${GIT_VERSION}\\\""
 GFRAME_LDFLAGS=""
 GFRAME_LIBS=""
@@ -221,6 +241,7 @@ Configuration:
   C++ Compiler....:    $CXX $CXXFLAGS $CPPFLAGS $GFRAME_CPPFLAGS
   Libraries.......:    $LIBS $GFRAME_LIBS
   Syslog..........:    ${syslog}
+  Filelog.........:    ${filelog}
 
   Enable database:     ${database}"
 
