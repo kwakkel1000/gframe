@@ -183,8 +183,8 @@ void output::openLog()
 #ifdef USE_SYSLOG
     if (sSyslog != "")
     {
-        addOutput("syslog: " + sSyslog, 2);
         openlog(sSyslog.c_str(), LOG_PID, LOG_USER);
+        addOutput("syslog: " + sSyslog, 2);
     }
 #endif
     if (sLogFile != "")
