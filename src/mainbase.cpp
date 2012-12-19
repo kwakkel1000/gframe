@@ -179,16 +179,22 @@ m_Foreground(false)
 {
     m_Name = name;
     m_Syslog = m_Name;
+#ifdef USE_FILELOG
     m_LogFileLocation = "log/";
-    m_PidFileLocation = "/var/run/" + m_Name + "/";
-    m_IniFile = "conf/" + m_Name + ".ini";
-    m_PidFile = m_PidFileLocation + m_Name + ".pid";
     m_LogFile = m_LogFileLocation + m_Name + ".log";
+#endif
+    m_PidFileLocation = "/var/run/" + m_Name + "/";
+    m_PidFile = m_PidFileLocation + m_Name + ".pid";
+    m_IniFile = "conf/" + m_Name + ".ini";
     SetupSignal();
     versions::instance().addVersion("Copyright (c) 2012 Gijs Kwakkel");
     versions::instance().addVersion("GNU Version 2");
     versions::instance().addVersion(gNAME + " " + gVERSION + " " + gGITVERSION);
+#ifdef USE_FILELOG
     addHelpItem("Runs the " + m_Name + " (default as " + m_Name + ", " + m_PidFile + ", " + m_LogFile + " " + m_IniFile + ")");
+#else
+    addHelpItem("Runs the " + m_Name + " (default as " + m_Name + ", " + m_PidFile + " " + m_IniFile + ")");
+#endif
     addHelpItem("USAGE " + m_Name + " [OPTIONS]");
     addHelpItem("Available options:");
     addHelpItem("\t-h, --help List options");
@@ -198,8 +204,12 @@ m_Foreground(false)
     addHelpItem("\t-c, --config Set config file (default: " + m_IniFile + ")");
     addHelpItem("\t-d, --debug Set debug level [1-10] (default: 5)");
     addHelpItem("\t-p, --pid Set Pid file location (default: " + m_PidFileLocation + ")");
+#ifdef USE_SYSLOG
     addHelpItem("\t-s, --syslog Set syslog name (default: " + m_Syslog + ")");
+#endif
+#ifdef USE_FILELOG
     addHelpItem("\t-l, --log Set log file location (default: " + m_LogFileLocation + ")");
+#endif
     addHelpItem("\t-n, --name Set name for pid/log files (default: " + m_Name + ")");
     addHelpItem("\t--INeedRootPowerz Requered when running as root (not needed when droproot is specified)");
 }
@@ -263,6 +273,7 @@ void mainbase::parseArgs(std::vector<std::string> args)
                 m_PidFileLocation = args[nArg];
             }
         }
+#ifdef USE_SYSLOG
         else if (args[nArg] == "--syslog" || args[nArg] == "-s")
         {
             if ((++nArg) < args.size())
@@ -270,6 +281,8 @@ void mainbase::parseArgs(std::vector<std::string> args)
                 m_Syslog = args[nArg];
             }
         }
+#endif
+#ifdef USE_FILELOG
         else if (args[nArg] == "--log" || args[nArg] == "-l")
         {
             if ((++nArg) < args.size())
@@ -277,6 +290,7 @@ void mainbase::parseArgs(std::vector<std::string> args)
                 m_LogFileLocation = args[nArg];
             }
         }
+#endif
         else if (args[nArg] == "--name" || args[nArg] == "-n")
         {
             if ((++nArg) < args.size())
@@ -294,13 +308,17 @@ void mainbase::parseArgs(std::vector<std::string> args)
 int mainbase::run()
 {
     m_PidFile = m_PidFileLocation + m_Name + ".pid";
+#ifdef USE_FILELOG
     m_LogFile = m_LogFileLocation + m_Name + ".log";
+#endif
     versions::instance().showVersion();
     if (readPidFile())
     {
         return 1;
     }
+#ifdef USE_FILELOG
     createDirectory(m_LogFileLocation);
+#endif
     createDirectory(m_PidFileLocation);
     if (isRoot() && !m_DropRoot)
     {
@@ -327,7 +345,9 @@ int mainbase::run()
     {
         return DaemonizeStatus;
     }
+#ifdef USE_FILELOG
     output::instance().setLogFile(m_LogFile);
+#endif
     output::instance().setSyslog(m_Syslog);
     output::instance().openLog();
     std::string startBlock = "+++++++++++++++++++++++++++++++++";
