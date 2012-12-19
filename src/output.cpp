@@ -183,12 +183,13 @@ void output::openLog()
 #ifdef USE_SYSLOG
     if (sSyslog != "")
     {
+        addOutput("syslog: " + sSyslog, 2);
         openlog(sSyslog.c_str(), LOG_PID, LOG_USER);
     }
 #endif
     if (sLogFile != "")
     {
-        std::cout << sLogFile.c_str() << std::endl;
+        addOutput("logfile: " + sLogFile, 2);
         fLogFile.open(sLogFile.c_str(), std::ios::app);
         fLogFile << "\r\n\r\n\r\n\r\nopen logfile\r\n";
     }

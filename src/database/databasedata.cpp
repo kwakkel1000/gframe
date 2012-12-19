@@ -284,11 +284,8 @@ std::vector< std::vector< std::string > > databasedata::raw_sql(std::string quer
 void databasedata::add_sql_queue(std::string query)
 {
     std::unique_lock<std::mutex> lock(m_SqlMutex);
-    output::instance().addOutput("databasedata::add_sql_queue  sql_queue.push(query)", 10);
     sql_queue.push(query);
-    output::instance().addOutput("databasedata::add_sql_queue  lock.unlock()", 10);
     lock.unlock();
-    output::instance().addOutput("databasedata::add_sql_queue  m_SqlAvailable.notify_one()", 10);
     m_SqlAvailable.notify_one();
 }
 
