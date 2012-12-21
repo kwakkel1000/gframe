@@ -44,7 +44,7 @@
 #include <gframe/configreader.h>
 
 #ifdef GDBDEBUG
-void gdb_sighandler(int i_num, siginfo_t * i_info)
+void gdb_sighandler(int i_num, siginfo_t * i_info, void * i_val)
 #endif
 void SegFaultAction(int i_num, siginfo_t * i_info, void * i_val);
 void TermAction(int i_num, siginfo_t * i_info, void * i_val);

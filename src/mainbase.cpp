@@ -46,7 +46,7 @@ std::string gVERSION = VERSION;
 std::string gGITVERSION = __GIT_VERSION;
 
 #ifdef GDBDEBUG
-void gdb_sighandler(int i_num, siginfo_t * i_info)
+void gdb_sighandler(int i_num, siginfo_t * i_info, void * i_val)
 {
    char exe[256];
    if (readlink("/proc/self/exe", exe, sizeof(exe)) < 0) {
@@ -184,7 +184,7 @@ void mainbase::SetupSignal()
         sigaction (SIGUSR1, &new_action, NULL);
 
 #ifdef GDBDEBUG
-    new_action.sa_sigaction = (void*)gdb_sighandler;
+    new_action.sa_sigaction = gdb_sighandler;
 
     sigaction (SIGSEGV, NULL, &old_action);
     if (old_action.sa_handler != SIG_IGN)

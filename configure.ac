@@ -203,7 +203,12 @@ AC_ARG_ENABLE(gdbdebug,
     *) AC_MSG_ERROR([bad value ${enableval} for --enable-gdbdebug]) ;;
   esac],
   [gdb=no])
-AM_CONDITIONAL(GDBDEBUG, test "x$gdb" = "xyes")
+AM_CONDITIONAL(GDB, test "x$gdb" = "xyes")
+
+if test "x$gdb" = "xyes"; then
+  AC_DEFINE(GDBDEBUG,1,[Define to 1 if gdb debug should be enabled.])
+  gdbdebug="yes"
+fi
 
 
 GFRAME_CPPFLAGS=" -D__GIT_VERSION=\\\"\${GIT_VERSION}\\\""
@@ -248,7 +253,7 @@ Configuration:
   Libraries.......:    $LIBS $GFRAME_LIBS
   Syslog..........:    ${syslog}
   Filelog.........:    ${filelog}
-  gdb Debug.......:    ${gdb}
+  gdb Debug.......:    ${gdbdebug}
 
   Enable database:     ${database}"
 
