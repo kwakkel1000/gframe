@@ -107,7 +107,7 @@ bool configreader::readFile(std::string _ConfigFile)
                     }
                     else
                     {
-                        uint pos = line.find("=");
+                        size_t pos = line.find("=");
                         if (pos != std::string::npos)
                         {
                             std::string var = line.substr(0, pos);

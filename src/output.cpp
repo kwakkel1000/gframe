@@ -185,12 +185,13 @@ void output::appendLog(std::string sOutput, int iLevel)
 std::string output::sFormatTime(std::string sFormat)
 {
     time_t rawtime;
-    struct tm * timeinfo;
+    struct tm timeinfo;
     char cBuffer [80];
 
     time ( &rawtime );
-    timeinfo = localtime ( &rawtime );
-    strftime(cBuffer, 80, sFormat.c_str(), timeinfo);
+    //timeinfo = localtime_r ( &rawtime );
+    localtime_r ( &rawtime, &timeinfo );
+    strftime(cBuffer, 80, sFormat.c_str(), &timeinfo);
     return cBuffer;
 }
 

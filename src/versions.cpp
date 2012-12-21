@@ -28,8 +28,8 @@
 
 void versions::showVersion()
 {
-    unsigned int longeststring = 0;
-    for (unsigned int Version_iterator = 0; Version_iterator < m_VersionItems.size(); Version_iterator++)
+    size_t longeststring = 0;
+    for (size_t Version_iterator = 0; Version_iterator < m_VersionItems.size(); Version_iterator++)
     {
         if (m_VersionItems[Version_iterator].size() > longeststring)
         {
@@ -37,15 +37,15 @@ void versions::showVersion()
         }
     }
     std::string Block = " ++++++";
-    for (unsigned int longeststring_Iterator = 0; longeststring_Iterator < longeststring; longeststring_Iterator++)
+    for (size_t longeststring_Iterator = 0; longeststring_Iterator < longeststring; longeststring_Iterator++)
     {
         Block = Block + "+";
     }
     output::instance().addStatus(true, Block);
-    for (unsigned int Version_iterator = 0; Version_iterator < m_VersionItems.size(); Version_iterator++)
+    for (size_t Version_iterator = 0; Version_iterator < m_VersionItems.size(); Version_iterator++)
     {
         std::string tmplength = " +  " + m_VersionItems[Version_iterator];
-        for (unsigned int tmplength_Iterator = 0; tmplength_Iterator < (longeststring - m_VersionItems[Version_iterator].size()); tmplength_Iterator++)
+        for (size_t tmplength_Iterator = 0; tmplength_Iterator < (longeststring - m_VersionItems[Version_iterator].size()); tmplength_Iterator++)
         {
             tmplength = tmplength + " ";
         }

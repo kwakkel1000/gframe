@@ -24,28 +24,15 @@
 
 #include <gframe/config.h>
 #include <gframe/socket/tcpsocket.h>
-#include "string.h"
-#include <string.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <iostream>
-#include <stdio.h>
 
 
 tcpsocket::tcpsocket()
 {
-    m_sock = -1;
-#ifdef HAVE_IPV6
-    memset ( &m_addr6, 0, sizeof ( m_addr6 ) );
-#else
-    memset ( &m_addr, 0, sizeof ( m_addr ) );
-#endif
+    recvnullok = false;
 }
 
 tcpsocket::~tcpsocket()
 {
-    if ( is_valid() )
-        ::close ( m_sock );
 }
 
 bool tcpsocket::create()
@@ -113,6 +100,14 @@ bool tcpsocket::listen() const
 
 int tcpsocket::recv ( std::string& data ) const
 {
+    int status = -1, total = 0;
+    data = "";
+    char buffer[1024*1024];
+
+    status = 1;
+    total += status;
+    buffer[total] = '\0';
+    data = buffer;
     /*int n = 1, total = 0, found = 0;
     //char c;
     char temp[1024*1024];
@@ -197,7 +192,7 @@ int tcpsocket::recv ( std::string& data ) const
 //        data += std::string(buffer);
 //    }*/
 //    return 1;
-    return 1;
+    return 0;
 }
 
 void tcpsocket::init_listen()

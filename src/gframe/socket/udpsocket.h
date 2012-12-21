@@ -26,18 +26,6 @@
 #define GFRAME_SOCKET_UDPSOCKET_H
 
 #include <gframe/socket/socket.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <string>
-#include <arpa/inet.h>
-#include <string.h>
-#include <errno.h>
-#include <fcntl.h>
-//#include <iostream>
-
 
 class udpsocket : public socketbase
 {

@@ -112,7 +112,7 @@ std::vector< std::map< std::string, std::string > > databasedata::get(std::strin
     std::string _sSqlString;
     _sSqlString = _sSqlString + "SELECT ";
     _sSqlString = _sSqlString + " `";
-    for (unsigned int uiKeysIndex = 0; uiKeysIndex < mvKeys.size() -1; uiKeysIndex++)
+    for (size_t uiKeysIndex = 0; uiKeysIndex < mvKeys.size() -1; uiKeysIndex++)
     {
         _sSqlString = _sSqlString + mvKeys[uiKeysIndex];
         _sSqlString = _sSqlString + "`, `";
@@ -129,10 +129,10 @@ std::vector< std::map< std::string, std::string > > databasedata::get(std::strin
     std::vector< std::vector< std::string > > _vSqlResult;
     std::vector< std::map < std::string, std::string > > _vDataResult;
     _vSqlResult= raw_sql(_sSqlString);
-    for (unsigned int _uiSqlResultIndex = 0; _uiSqlResultIndex < _vSqlResult.size(); _uiSqlResultIndex++)
+    for (size_t _uiSqlResultIndex = 0; _uiSqlResultIndex < _vSqlResult.size(); _uiSqlResultIndex++)
     {
         std::map< std::string, std::string > _mData;
-        for (unsigned int _uiSqlResultIndexIndex = 0; _uiSqlResultIndexIndex < _vSqlResult[_uiSqlResultIndex].size(); _uiSqlResultIndexIndex++)
+        for (size_t _uiSqlResultIndexIndex = 0; _uiSqlResultIndexIndex < _vSqlResult[_uiSqlResultIndex].size(); _uiSqlResultIndexIndex++)
         {
             _mData[glib::toLower(mvKeys[_uiSqlResultIndexIndex])] = _vSqlResult[_uiSqlResultIndex][_uiSqlResultIndexIndex];
         }
@@ -173,7 +173,7 @@ bool databasedata::insert(std::string msWhere, std::vector< std::string > mvKeys
     _sSqlString = _sSqlString + "INSERT into ";
     _sSqlString = _sSqlString + msWhere;
     _sSqlString = _sSqlString + " (`";
-    for (unsigned int uiKeysIndex = 0; uiKeysIndex < mvKeys.size() -1; uiKeysIndex++)
+    for (size_t uiKeysIndex = 0; uiKeysIndex < mvKeys.size() -1; uiKeysIndex++)
     {
         _sSqlString = _sSqlString + mvKeys[uiKeysIndex];
         _sSqlString = _sSqlString + "`, `";
@@ -183,7 +183,7 @@ bool databasedata::insert(std::string msWhere, std::vector< std::string > mvKeys
         _sSqlString = _sSqlString + mvKeys[mvKeys.size() -1];
     }
     _sSqlString = _sSqlString + "`) VALUES (";
-    for (unsigned int uiValuesIndex = 0; uiValuesIndex < mvValues.size() -1; uiValuesIndex++)
+    for (size_t uiValuesIndex = 0; uiValuesIndex < mvValues.size() -1; uiValuesIndex++)
     {
         _sSqlString = _sSqlString + "'" + mvValues[uiValuesIndex];
         _sSqlString = _sSqlString + "', ";
@@ -219,7 +219,7 @@ bool databasedata::update(std::string msWhere, std::vector< std::string > mvKeys
     _sSqlString = _sSqlString + "UPDATE ";
     _sSqlString = _sSqlString + msWhere;
     _sSqlString = _sSqlString + " SET `";
-    for (unsigned int uiKeysIndex = 0; uiKeysIndex < mvKeys.size() -1; uiKeysIndex++)
+    for (size_t uiKeysIndex = 0; uiKeysIndex < mvKeys.size() -1; uiKeysIndex++)
     {
         _sSqlString = _sSqlString + mvKeys[uiKeysIndex];
         _sSqlString = _sSqlString + "`='";

@@ -26,7 +26,6 @@
 #include <gframe/socket/socket.h>
 #include <gframe/output.h>
 #include <gframe/glib.h>
-#include "string.h"
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -36,8 +35,25 @@ extern "C" void libgframe_socket_is_present(void)
 {
 }
 
+socketbase::socketbase () : m_sock(-1)
+{
+    std::lock_guard<std::mutex> addrlock(m_addrMutex);
+#ifdef HAVE_IPV6
+    memset(&m_addr6, 0, sizeof(m_addr6));
+#else
+    memset ( &m_addr, 0, sizeof ( m_addr ) );
+#endif
+}
+
+socketbase::~socketbase ()
+{
+    if ( is_valid() )
+        ::close ( m_sock );
+}
+
 bool socketbase::bind ( const int port )
 {
+    std::lock_guard<std::mutex> addrlock(m_addrMutex);
     if ( ! is_valid() )
     {
         return false;
@@ -105,11 +121,9 @@ int socketbase::recv ( std::string& data ) const
 {
     int status = -1, total = 0, found = 0;
     data = "";
-    //char c;
-    //char temp[1024*1024];
     char buffer[1024*1024];
 
-    // Keep reading up to a '\n' or '\r'
+    // Keep reading up to a '\r' or '\n'
 
     while ( !found ) {
         status = ::recv(m_sock, &buffer[total], sizeof(buffer) - total - 1, 0);
@@ -119,13 +133,21 @@ int socketbase::recv ( std::string& data ) const
             //break;
             return 0;
         }
-        else if ( status == 0 )
+        else if ( status == 0 && !recvnullok)
         {
             return 0;
         }
+        else if ( status == 0 && recvnullok)
+        {
+            total += status;
+            buffer[total] = '\0';
+            data = buffer;
+            return 1;
+        }
         total += status;
         buffer[total] = '\0';
-        found = (strchr(buffer, '\n') != 0);
+        //found = (strchr(buffer, '\n') != 0);
+        found = (strchr(buffer, '\r') != 0 || strchr(buffer, '\n') != 0);
     }
     data = buffer;
     return status;
@@ -136,7 +158,7 @@ const socketbase& socketbase::operator >> ( std::string& data ) const
     if ( ! socketbase::recv ( data ) )
     {
         output::instance().addStatus(false, "Could not read from socket.");
-        //throw "Could not read from socket.";
+        throw "Could not read from socket.";
     }
     return *this;
 }
@@ -146,7 +168,7 @@ const socketbase& socketbase::operator << ( const std::string& data ) const
     if ( ! socketbase::send ( data ) )
     {
         output::instance().addStatus(false, "Could not write to socket.");
-        //throw "Could not write to socket.";
+        throw "Could not write to socket.";
     }
     return *this;
 }

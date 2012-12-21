@@ -202,9 +202,10 @@ std::vector< int > glib::vectorTimeFromSecondsTime(int miTime, bool _WithWeeks=t
 
 std::string glib::stringFromInt(int miInput)
 {
-    std::stringstream ssConversion;
+/*    std::stringstream ssConversion;
     ssConversion << miInput;
-    return ssConversion.str();
+    return ssConversion.str(); */
+    return std::to_string(miInput);
 }
 
 int glib::intFromString(std::string msInput)

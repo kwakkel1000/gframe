@@ -45,37 +45,42 @@ std::string gNAME = PACKAGE;
 std::string gVERSION = VERSION;
 std::string gGITVERSION = __GIT_VERSION;
 
-#ifdef GDBDEBUG
 void gdb_sighandler(int i_num, siginfo_t * i_info, void * i_val)
 {
-   char exe[256];
-   if (readlink("/proc/self/exe", exe, sizeof(exe)) < 0) {
-      perror("readlink");
-      exit(EXIT_FAILURE);
-   }
+#ifdef GDBDEBUG
+    char exe[1024];
+    ssize_t len = ::readlink("/proc/self/exe", exe, sizeof(exe)-1);
+    if (len == -1)
+    {
+         perror("readlink");
+         exit(EXIT_FAILURE);
+    }
+    exe[len] = '\0';
 
-   char pid[16];
-   snprintf(pid, sizeof(pid), "%d", getpid());
+    char pid[16];
+    snprintf(pid, sizeof(pid), "%d", getpid());
 
-   pid_t p = fork();
-   if (p == 0) {
-      execl("/usr/bin/gdb", "gdb", "-ex", "cont",
+    pid_t p = fork();
+    if (p == 0) {
+        execl("/usr/bin/gdb", "gdb", "-ex", "cont",
             exe, pid, NULL);
-      perror("execl");
-      exit(EXIT_FAILURE);
-   }
-   else if (p < 0) {
-      perror("fork");
-      exit(EXIT_FAILURE);
-   }
-   else {
-      // Allow a little time for GDB to start before
-      // dropping into the default signal handler
-      sleep(1);
-      signal(i_num, SIG_DFL);
-   }
-}
+        perror("execl");
+        exit(EXIT_FAILURE);
+    }
+    else if (p < 0) {
+        perror("fork");
+        exit(EXIT_FAILURE);
+    }
+    else
+    {
+        // Allow a little time for GDB to start before
+        // dropping into the default signal handler
+        sleep(1);
+        signal(i_num, SIG_DFL);
+        throw * i_info;
+    }
 #endif
+}
 
 void SegFaultAction(int i_num, siginfo_t * i_info, void * i_val)
 {
@@ -154,7 +159,12 @@ void Usr1Action(int i_num, siginfo_t * i_info, void * i_val)
     output::instance().addOutput("si_ptr:     " + ssi_ptr + "    = POSIX.1b signal", 4);
 #endif
     output::instance().closeLog();
-    usleep(1000000);
+    struct timespec req, rem;
+    req.tv_sec = 1;
+    req.tv_nsec = 0;
+    rem.tv_sec = 0;
+    rem.tv_nsec = 0;
+    nanosleep(&req, &rem);
     output::instance().openLog();
     std::string startBlock = "+++++++++++++++++++++++++++++++++++++++++++++++";
     output::instance().addOutput(startBlock, 2);
@@ -169,9 +179,6 @@ void mainbase::SetupSignal()
     /* Set up the structure to specify the new action. */
     sigemptyset (&new_action.sa_mask);
     new_action.sa_flags = SA_SIGINFO
-#ifdef GDBDEBUG
-      | SA_RESTART
-#endif
 #if defined(linux) || defined(__linux) || defined(__linux__)
       | SA_NOMASK
 #endif
@@ -183,7 +190,27 @@ void mainbase::SetupSignal()
     if (old_action.sa_handler != SIG_IGN)
         sigaction (SIGUSR1, &new_action, NULL);
 
+// termination
+    new_action.sa_sigaction = TermAction;
+    sigaction (SIGINT, NULL, &old_action);
+    if (old_action.sa_handler != SIG_IGN)
+        sigaction (SIGINT, &new_action, NULL);
+
+    sigaction (SIGHUP, NULL, &old_action);
+    if (old_action.sa_handler != SIG_IGN)
+        sigaction (SIGHUP, &new_action, NULL);
+
+    sigaction (SIGTERM, NULL, &old_action);
+    if (old_action.sa_handler != SIG_IGN)
+        sigaction (SIGTERM, &new_action, NULL);
+
 #ifdef GDBDEBUG
+    new_action.sa_flags = SA_SIGINFO
+      | SA_RESTART
+#if defined(linux) || defined(__linux) || defined(__linux__)
+      | SA_NOMASK
+#endif
+      ;
     new_action.sa_sigaction = gdb_sighandler;
 
     sigaction (SIGSEGV, NULL, &old_action);
@@ -212,21 +239,8 @@ void mainbase::SetupSignal()
     if (old_action.sa_handler != SIG_IGN)
         sigaction (SIGSEGV, &new_action, NULL);
 
-
-// termination
-    new_action.sa_sigaction = TermAction;
-    sigaction (SIGINT, NULL, &old_action);
-    if (old_action.sa_handler != SIG_IGN)
-        sigaction (SIGINT, &new_action, NULL);
-
-    sigaction (SIGHUP, NULL, &old_action);
-    if (old_action.sa_handler != SIG_IGN)
-        sigaction (SIGHUP, &new_action, NULL);
-
-    sigaction (SIGTERM, NULL, &old_action);
-    if (old_action.sa_handler != SIG_IGN)
-        sigaction (SIGTERM, &new_action, NULL);
 #endif
+
 }
 
 
@@ -248,19 +262,22 @@ m_Foreground(false)
     versions::instance().addVersion("Copyright (c) 2012 Gijs Kwakkel");
     versions::instance().addVersion("GNU Version 2");
     versions::instance().addVersion(gNAME + " " + gVERSION + " " + gGITVERSION);
+    addHelpItem("Runs the " + m_Name +
+        " (default as " + m_Name +
+        ", " + m_PidFile +
 #ifdef USE_FILELOG
-    addHelpItem("Runs the " + m_Name + " (default as " + m_Name + ", " + m_PidFile + ", " + m_LogFile + " " + m_IniFile + ")");
-#else
-    addHelpItem("Runs the " + m_Name + " (default as " + m_Name + ", " + m_PidFile + " " + m_IniFile + ")");
+        ", " + m_LogFile +
 #endif
+        ", " + m_IniFile +
+        ")");
     addHelpItem("USAGE " + m_Name + " [OPTIONS]");
     addHelpItem("Available options:");
     addHelpItem("\t-h, --help List options");
     addHelpItem("\t-v, --version Output version and exit");
-    addHelpItem("\t-f, --foreground Don't fork into the background");
+    addHelpItem("\t-f, --foreground Don't fork into the background (automaticly if debug)");
     addHelpItem("\t-dr, --droproot [username] [group] run as");
     addHelpItem("\t-c, --config Set config file (default: " + m_IniFile + ")");
-    addHelpItem("\t-d, --debug Set debug level [1-10] (default: 5)");
+    addHelpItem("\t-d, --debug Set debug level [1-10] (default: 5) (implies foreground)");
     addHelpItem("\t-p, --pid Set Pid file location (default: " + m_PidFileLocation + ")");
 #ifdef USE_SYSLOG
     addHelpItem("\t-s, --syslog Set syslog name (default: " + m_Syslog + ")");
@@ -322,6 +339,7 @@ void mainbase::parseArgs(std::vector<std::string> args)
                 std::stringstream ss(args[nArg]);
                 ss >> i;
                 output::instance().setDebugLevel(i);
+                m_Foreground = true;
             }
         }
         else if (args[nArg] == "--pid" || args[nArg] == "-p")
@@ -409,7 +427,7 @@ int mainbase::run()
     output::instance().setSyslog(m_Syslog);
     output::instance().openLog();
     std::string startBlock = "+++++++++++++++++++++++++++++++++";
-    for (unsigned int m_Name_Iterator = 0; m_Name_Iterator < m_Name.size(); m_Name_Iterator++)
+    for (size_t m_Name_Iterator = 0; m_Name_Iterator < m_Name.size(); m_Name_Iterator++)
     {
         startBlock = startBlock + "+";
     }
@@ -420,7 +438,12 @@ int mainbase::run()
     {
         return 1;
     }
-    usleep(2000000);
+    struct timespec req, rem;
+    req.tv_sec = 2;
+    req.tv_nsec = 0;
+    rem.tv_sec = 0;
+    rem.tv_nsec = 0;
+    nanosleep(&req, &rem);
     return -1;
 }
 
@@ -498,7 +521,7 @@ void mainbase::writePidFile(int Pid)
 
 bool mainbase::isRoot()
 {
-# if defined(_WIN32) || defined(__WIN32__) || defined(WIN32) || defined(__CYGWIN__)
+#if defined(linux) || defined(__linux) || defined(__linux__)
     // User root? If one of these were root, we could switch the others to root, too
     if ((geteuid() == 0) || (getuid() == 0) || (getegid() == 0) || (getgid()== 0))
     {
@@ -509,70 +532,122 @@ bool mainbase::isRoot()
         return false;
     }
     //return (geteuid() == 0 || getuid() == 0);
-# else
+#else
+//#if defined(_WIN32) || defined(__WIN32__) || defined(WIN32) || defined(__CYGWIN__)
     return false;
-# endif
+#endif
 }
 
 bool mainbase::dropRoot()
 {
-    struct passwd *pUser = getpwnam(m_Uid.c_str());
-    struct group *pGroup = getgrnam(m_Gid.c_str());
-    if (!pUser)
+    struct passwd pwd;
+    struct passwd *pwdresult;
+    struct group grp;
+    struct group *grpresult;
+    char *pwdbuf;
+    char *grpbuf;
+    size_t pwdbufsize;
+    size_t grpbufsize;
+    int pwdstatus;
+    int grpstatus;
+    long int pwsizemax;
+    long int grsizemax;
+
+    pwsizemax = sysconf(_SC_GETPW_R_SIZE_MAX);
+    if ( pwsizemax == -1 )         /* Value was indeterminate */
     {
-        output::instance().addStatus(false, "User not found");
-        return false;
+        pwdbufsize = 16384;        /* Should be more than enough */
     }
-    else if (!pGroup)
+    pwdbufsize = (size_t)pwsizemax;
+
+    pwdbuf = (char*) malloc(pwdbufsize);
+    if (pwdbuf == NULL)
     {
-        output::instance().addStatus(false, "Group not found");
-        return false;
+        perror("malloc");
+        exit(EXIT_FAILURE);
     }
-    else
+
+    grsizemax = sysconf(_SC_GETGR_R_SIZE_MAX);
+    if ( grsizemax == -1 )         /* Value was indeterminate */
     {
-        int gid = pGroup->gr_gid;
-        int uid = pUser->pw_uid;
-        if (gid == 0 || uid == 0)
+        grpbufsize = 16384;        /* Should be more than enough */
+    }
+    grpbufsize = (size_t)grsizemax;
+
+    grpbuf = (char*) malloc(grpbufsize);
+    if (grpbuf == NULL)
+    {
+        perror("malloc");
+        exit(EXIT_FAILURE);
+    }
+
+    pwdstatus = getpwnam_r(m_Uid.c_str(), &pwd, pwdbuf, pwdbufsize, &pwdresult);
+    if ( pwdresult == NULL )
+    {
+        if ( pwdstatus == 0 )
         {
-            output::instance().addStatus(false, "Cannot run as root");
-            return false;
+            output::instance().addStatus(false, "User not found");
         }
         else
         {
-            if ((geteuid() == 0) || (getuid() == 0) || (getegid() == 0) || (getgid()== 0))
-            {
-                int u, eu, g, eg, sg;
-                sg = setgroups(0, NULL);
-                if (sg < 0)
-                {
-                    output::instance().addStatus(false, "Could not remove supplementary groups!");
-                    return false;
-                }
-                g = setgid(pGroup->gr_gid);
-                eg = setegid(pGroup->gr_gid);
-                if ((g < 0) || (eg < 0))
-                {
-                    output::instance().addStatus(false, "Could not switch group id!");
-                    return false;
-                }
-                u = setuid(pUser->pw_uid);
-                eu = seteuid(pUser->pw_uid);
-                if ((u < 0) || (eu < 0))
-                {
-                    output::instance().addStatus(false, "Could not switch user id!");
-                    return false;
-                }
-            }
-            return true;
+            output::instance().addStatus(false, "Error and User not found?");
+        }
+        return false;
+    }
+
+    grpstatus = getgrnam_r(m_Gid.c_str(), &grp, grpbuf, grpbufsize, &grpresult);
+    if ( grpresult == NULL )
+    {
+        if ( grpstatus == 0 )
+        {
+            output::instance().addStatus(false, "Group not found");
+        }
+        else
+        {
+            output::instance().addStatus(false, "Error and Group not found?");
+        }
+        return false;
+    }
+
+    int gid = grp.gr_gid;
+    int uid = pwd.pw_uid;
+    if ( gid == 0 || uid == 0 )
+    {
+        output::instance().addStatus(false, "Cannot run as root");
+        return false;
+    }
+    if ((geteuid() == 0) || (getuid() == 0) || (getegid() == 0) || (getgid()== 0))
+    {
+        int u, eu, g, eg, sg;
+        sg = setgroups(0, NULL);
+        if (sg < 0)
+        {
+            output::instance().addStatus(false, "Could not remove supplementary groups!");
+            return false;
+        }
+        g = setgid(grp.gr_gid);
+        eg = setegid(grp.gr_gid);
+        if ((g < 0) || (eg < 0))
+        {
+            output::instance().addStatus(false, "Could not switch group id!");
+            return false;
+        }
+        u = setuid(pwd.pw_uid);
+        eu = seteuid(pwd.pw_uid);
+        if ((u < 0) || (eu < 0))
+        {
+            output::instance().addStatus(false, "Could not switch user id!");
+            return false;
         }
         return true;
     }
-    return true;
+    output::instance().addStatus(false, "End of dropRoot, are you root?");
+    return false;
 }
 
 void mainbase::showHelp()
 {
-    for (unsigned int HelpItems_iterator = 0; HelpItems_iterator < m_HelpItems.size(); HelpItems_iterator++)
+    for (size_t HelpItems_iterator = 0; HelpItems_iterator < m_HelpItems.size(); HelpItems_iterator++)
     {
         output::instance().addOutput(m_HelpItems[HelpItems_iterator]);
     }

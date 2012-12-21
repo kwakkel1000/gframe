@@ -27,26 +27,14 @@
 
 #include <gframe/config.h>
 #include <gframe/socket/udpsocket.h>
-#include "string.h"
-#include <string.h>
-#include <errno.h>
-#include <fcntl.h>
-
 
 udpsocket::udpsocket()
 {
-    m_sock = -1;
-#ifdef HAVE_IPV6
-    memset ( &m_addr6, 0, sizeof ( m_addr6 ) );
-#else
-    memset ( &m_addr, 0, sizeof ( m_addr ) );
-#endif
+    recvnullok = true;
 }
 
 udpsocket::~udpsocket()
 {
-    if ( is_valid() )
-        ::close ( m_sock );
 }
 
 bool udpsocket::create()

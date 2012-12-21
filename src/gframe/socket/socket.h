@@ -35,12 +35,15 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <mutex>
 
 #define BUFLEN 16384
 
 class socketbase
 {
     public:
+        socketbase();
+        ~socketbase();
         virtual bool set_non_blocking ( const bool );
         virtual bool set_reusable ( const int );
         virtual bool set_v6only ( const int );
@@ -64,12 +67,16 @@ class socketbase
 
     protected:
 
+        bool recvnullok;
+
         int m_sock;
 #ifdef HAVE_IPV6
         struct sockaddr_in6 m_addr6;
 #else
         struct sockaddr_in m_addr;
 #endif
+    private:
+        std::mutex m_addrMutex;
 };
 
 #endif // GFRAME_SOCKET_SOCKET_H
