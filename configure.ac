@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([GFRAME], [2.0], [VOID])
+AC_INIT([GFRAME], [2.1], [VOID])
 AC_CANONICAL_TARGET
 AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE()
@@ -195,6 +195,17 @@ if test "x$filelog" = "xyes"; then
   use_filelog="yes"
 fi
 
+AC_ARG_ENABLE(gdbdebug,
+  [AS_HELP_STRING([--enable-gdbdebug], [use gdb to debug when the program crashes])],
+  [case "${enableval}" in
+    yes) gdb=yes ;;
+    no)  gdb=no ;;
+    *) AC_MSG_ERROR([bad value ${enableval} for --enable-gdbdebug]) ;;
+  esac],
+  [gdb=no])
+AM_CONDITIONAL(GDBDEBUG, test "x$gdb" = "xyes")
+
+
 GFRAME_CPPFLAGS=" -D__GIT_VERSION=\\\"\${GIT_VERSION}\\\""
 GFRAME_LDFLAGS=""
 GFRAME_LIBS=""
@@ -237,6 +248,7 @@ Configuration:
   Libraries.......:    $LIBS $GFRAME_LIBS
   Syslog..........:    ${syslog}
   Filelog.........:    ${filelog}
+  gdb Debug.......:    ${gdb}
 
   Enable database:     ${database}"
 

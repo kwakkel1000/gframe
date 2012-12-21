@@ -319,12 +319,12 @@ void databasedata::query_run()
         {
             while (!sql_queue.empty() && a_Run)
             {
-                std::string temp = sql_queue.front();
+                std::string sqlstring = sql_queue.front();
                 sql_queue.pop();
                 if (state == 200 && m_db->connected())
                 {
-                    output::instance().addOutput(temp, 9);
-                    m_db->set(temp.c_str());
+                    output::instance().addOutput(sqlstring, 9);
+                    m_db->set(sqlstring.c_str());
                     //std::lock_guard<std::mutex> lock2(m_CounterMutex);
                     //m_last_query_time = time (NULL);
                     //a_last_query_time = time (NULL);

@@ -45,6 +45,38 @@ std::string gNAME = PACKAGE;
 std::string gVERSION = VERSION;
 std::string gGITVERSION = __GIT_VERSION;
 
+#ifdef GDBDEBUG
+void gdb_sighandler(int i_num, siginfo_t * i_info)
+{
+   char exe[256];
+   if (readlink("/proc/self/exe", exe, sizeof(exe)) < 0) {
+      perror("readlink");
+      exit(EXIT_FAILURE);
+   }
+
+   char pid[16];
+   snprintf(pid, sizeof(pid), "%d", getpid());
+
+   pid_t p = fork();
+   if (p == 0) {
+      execl("/usr/bin/gdb", "gdb", "-ex", "cont",
+            exe, pid, NULL);
+      perror("execl");
+      exit(EXIT_FAILURE);
+   }
+   else if (p < 0) {
+      perror("fork");
+      exit(EXIT_FAILURE);
+   }
+   else {
+      // Allow a little time for GDB to start before
+      // dropping into the default signal handler
+      sleep(1);
+      signal(i_num, SIG_DFL);
+   }
+}
+#endif
+
 void SegFaultAction(int i_num, siginfo_t * i_info, void * i_val)
 {
     output::instance().addStatus(false, "SegFault Action");
@@ -76,7 +108,6 @@ void SegFaultAction(int i_num, siginfo_t * i_info, void * i_val)
 #endif
 
     throw * i_info;
-    exit(0);
 }
 
 void TermAction(int i_num, siginfo_t * i_info, void * i_val)
@@ -99,7 +130,7 @@ void TermAction(int i_num, siginfo_t * i_info, void * i_val)
     output::instance().addOutput("si_int:     " + glib::stringFromInt(i_info->si_int) + "    = POSIX.1b signal", 4);
     output::instance().addOutput("si_ptr:     " + ssi_ptr + "    = POSIX.1b signal", 4);
 #endif
-    exit(0);
+    throw * i_info;
 }
 
 void Usr1Action(int i_num, siginfo_t * i_info, void * i_val)
@@ -138,6 +169,9 @@ void mainbase::SetupSignal()
     /* Set up the structure to specify the new action. */
     sigemptyset (&new_action.sa_mask);
     new_action.sa_flags = SA_SIGINFO
+#ifdef GDBDEBUG
+      | SA_RESTART
+#endif
 #if defined(linux) || defined(__linux) || defined(__linux__)
       | SA_NOMASK
 #endif
@@ -147,28 +181,52 @@ void mainbase::SetupSignal()
     new_action.sa_sigaction = Usr1Action;
     sigaction (SIGUSR1, NULL, &old_action);
     if (old_action.sa_handler != SIG_IGN)
-      sigaction (SIGUSR1, &new_action, NULL);
+        sigaction (SIGUSR1, &new_action, NULL);
 
+#ifdef GDBDEBUG
+    new_action.sa_sigaction = (void*)gdb_sighandler;
+
+    sigaction (SIGSEGV, NULL, &old_action);
+    if (old_action.sa_handler != SIG_IGN)
+        sigaction(SIGSEGV, &new_action, NULL);
+
+    sigaction (SIGFPE, NULL, &old_action);
+    if (old_action.sa_handler != SIG_IGN)
+        sigaction(SIGFPE, &new_action, NULL);
+
+    sigaction (SIGBUS, NULL, &old_action);
+    if (old_action.sa_handler != SIG_IGN)
+        sigaction(SIGBUS, &new_action, NULL);
+
+    sigaction (SIGKILL, NULL, &old_action);
+    if (old_action.sa_handler != SIG_IGN)
+        sigaction(SIGILL, &new_action, NULL);
+
+    sigaction (SIGABRT, NULL, &old_action);
+    if (old_action.sa_handler != SIG_IGN)
+        sigaction(SIGABRT, &new_action, NULL);
+#else
 // SegFault
     new_action.sa_sigaction = SegFaultAction;
     sigaction (SIGSEGV, NULL, &old_action);
     if (old_action.sa_handler != SIG_IGN)
-      sigaction (SIGSEGV, &new_action, NULL);
+        sigaction (SIGSEGV, &new_action, NULL);
 
 
 // termination
     new_action.sa_sigaction = TermAction;
     sigaction (SIGINT, NULL, &old_action);
     if (old_action.sa_handler != SIG_IGN)
-      sigaction (SIGINT, &new_action, NULL);
+        sigaction (SIGINT, &new_action, NULL);
 
     sigaction (SIGHUP, NULL, &old_action);
     if (old_action.sa_handler != SIG_IGN)
-      sigaction (SIGHUP, &new_action, NULL);
+        sigaction (SIGHUP, &new_action, NULL);
 
     sigaction (SIGTERM, NULL, &old_action);
     if (old_action.sa_handler != SIG_IGN)
-      sigaction (SIGTERM, &new_action, NULL);
+        sigaction (SIGTERM, &new_action, NULL);
+#endif
 }
 
 
