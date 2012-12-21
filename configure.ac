@@ -45,7 +45,7 @@ AC_FUNC_FORK
 have_ipv6="no"
 
 AC_ARG_ENABLE([socket],
-  [  --enable-socket          Turn on build of gframe socket],
+  [AS_HELP_STRING([--enable-socket], [Turn on build of gframe socket])],
   [case "${enableval}" in
     yes) socket=yes ;;
     no)  socket=no ;;
@@ -55,7 +55,7 @@ AC_ARG_ENABLE([socket],
 AM_CONDITIONAL(SOCKET, test "x$socket" = "xyes")
 
 AC_ARG_ENABLE(ipv6,
-  [  --disable-ipv6           Turn off support of IPv6],
+  [AS_HELP_STRING([--disable-ipv6], [Turn off support for IPv6])],
   [case "${enableval}" in
     yes) ipv6=yes ;;
     no)  ipv6=no ;;
@@ -92,10 +92,8 @@ AC_SUBST(GFRAME_SOCKET_LIBS)
 ########  begin database    ##############
 
 
-have_db=no
-
 AC_ARG_ENABLE([database],
-  [  --enable-database          Turn on build of gframe database],
+  [AS_HELP_STRING([--enable-database], [Turn on build of gframe database])],
   [case "${enableval}" in
     yes) database=yes ;;
     no)  database=no ;;
@@ -108,7 +106,6 @@ dnl Checking for MySQL support
 AX_LIB_MYSQL()
 if test "x$want_mysql" = "xyes"; then
   if test "x$found_mysql" = "xyes"; then
-    have_db="MySQL"
     have_multirow_insert="yes"
   else
     AC_MSG_RESULT(error)
@@ -120,8 +117,6 @@ dnl Checking for SQLite3 support
 AX_LIB_SQLITE3()
 if test "x$WANT_SQLITE3" = "xyes"; then
   if test "x$found_sqlite3" = "xyes"; then
-    have_db="SQLite v3.x"
-
     saved_CPPFLAGS="$CPPFLAGS"
     CPPFLAGS="$CPPFLAGS $SQLITE3_CPPFLAGS $SQLITE3_LDFLAGS"
 
@@ -166,7 +161,7 @@ AC_SUBST(GFRAME_DATABASE_LIBS)
 
 
 AC_ARG_ENABLE(syslog,
-  [  --disable-syslog           Turn off support of syslog],
+  [AS_HELP_STRING([--disable-syslog], [use syslog (default is yes if available)])],
   [case "${enableval}" in
     yes) syslog=yes ;;
     no)  syslog=no ;;

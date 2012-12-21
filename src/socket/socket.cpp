@@ -136,7 +136,7 @@ const socketbase& socketbase::operator >> ( std::string& data ) const
     if ( ! socketbase::recv ( data ) )
     {
         output::instance().addStatus(false, "Could not read from socket.");
-        throw "Could not read from socket.";
+        //throw "Could not read from socket.";
     }
     return *this;
 }
@@ -146,7 +146,7 @@ const socketbase& socketbase::operator << ( const std::string& data ) const
     if ( ! socketbase::send ( data ) )
     {
         output::instance().addStatus(false, "Could not write to socket.");
-        throw "Could not write to socket.";
+        //throw "Could not write to socket.";
     }
     return *this;
 }
