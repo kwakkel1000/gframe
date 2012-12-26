@@ -45,13 +45,6 @@ class tcpsocket : public socketbase
         void init_listen();
         int select_listen(std::string&, int&);
         void send_client(int, std::string);
-
-        // Client initialization
-        //bool connect ( const std::string host, const int port );
-
-        // Data Transimission
-        //bool send ( const std::string ) const;
-        int recv ( std::string& ) const;
     private:
         int nclients;
         int maxfd;

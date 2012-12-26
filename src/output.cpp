@@ -189,7 +189,6 @@ std::string output::sFormatTime(std::string sFormat)
     char cBuffer [80];
 
     time ( &rawtime );
-    //timeinfo = localtime_r ( &rawtime );
     localtime_r ( &rawtime, &timeinfo );
     strftime(cBuffer, 80, sFormat.c_str(), &timeinfo);
     return cBuffer;

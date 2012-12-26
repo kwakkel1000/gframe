@@ -44,39 +44,40 @@ class socketbase
     public:
         socketbase();
         ~socketbase();
-        virtual bool set_non_blocking ( const bool );
-        virtual bool set_reusable ( const int );
-        virtual bool set_v6only ( const int );
+        virtual bool set_non_blocking (const bool);
+        virtual bool set_reusable (const int);
+        virtual bool set_v6only (const int);
 
-        virtual bool is_valid() const { return m_sock != -1; }
+        virtual bool is_valid() const { return m_Sock != -1; }
 
-        virtual bool bind ( const int port );
+        virtual bool bind (const int port);
         //bool bind ( const std::string ip, const int port );
         /////bool listen() const;
         /////bool accept ( tcpsocket& ) const;
 
         // Client initialization
-        bool connect ( const std::string host, const int port );
+        bool connect (const std::string host, const int port);
+        bool disconnect ();
 
 
         // Data Transimission
-        virtual bool send ( const std::string ) const;
-        virtual int recv ( std::string& ) const;
-        const socketbase& operator << ( const std::string& ) const;
-        const socketbase& operator >> ( std::string& ) const;
+        virtual bool send (const std::string) const;
+        virtual int recv (std::string&) const;
+        const socketbase& operator << (const std::string&) const;
+        const socketbase& operator >> (std::string&) const;
 
     protected:
 
-        bool recvnullok;
+        bool m_RecvNullOk;
 
-        int m_sock;
+        int m_Sock;
 #ifdef HAVE_IPV6
-        struct sockaddr_in6 m_addr6;
+        struct sockaddr_in6 m_Addr6;
 #else
-        struct sockaddr_in m_addr;
+        struct sockaddr_in m_Addr;
 #endif
     private:
-        std::mutex m_addrMutex;
+        std::mutex m_AddrMutex;
 };
 
 #endif // GFRAME_SOCKET_SOCKET_H

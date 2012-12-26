@@ -35,41 +35,41 @@ extern "C" void libgframe_socket_is_present(void)
 {
 }
 
-socketbase::socketbase () : m_sock(-1)
+socketbase::socketbase () : m_Sock(-1)
 {
-    std::lock_guard<std::mutex> addrlock(m_addrMutex);
+    std::lock_guard<std::mutex> addrlock(m_AddrMutex);
 #ifdef HAVE_IPV6
-    memset(&m_addr6, 0, sizeof(m_addr6));
+    memset(&m_Addr6, 0, sizeof(m_Addr6));
 #else
-    memset ( &m_addr, 0, sizeof ( m_addr ) );
+    memset ( &m_Addr, 0, sizeof ( m_Addr ) );
 #endif
 }
 
 socketbase::~socketbase ()
 {
     if ( is_valid() )
-        ::close ( m_sock );
+        ::close ( m_Sock );
 }
 
 bool socketbase::bind ( const int port )
 {
-    std::lock_guard<std::mutex> addrlock(m_addrMutex);
+    std::lock_guard<std::mutex> addrlock(m_AddrMutex);
     if ( ! is_valid() )
     {
         return false;
     }
 #ifdef HAVE_IPV6
-    m_addr6.sin6_family = AF_INET6;
-    m_addr6.sin6_addr = in6addr_any;
-    m_addr6.sin6_port = htons ( port );
+    m_Addr6.sin6_family = AF_INET6;
+    m_Addr6.sin6_addr = in6addr_any;
+    m_Addr6.sin6_port = htons ( port );
 
-    int bind_return = ::bind ( m_sock, ( struct sockaddr * ) &m_addr6, sizeof ( m_addr6 ) );
+    int bind_return = ::bind ( m_Sock, ( struct sockaddr * ) &m_Addr6, sizeof ( m_Addr6 ) );
 #else
-    m_addr.sin_family = AF_INET;
-    m_addr.sin_addr.s_addr = INADDR_ANY;
-    m_addr.sin_port = htons ( port );
+    m_Addr.sin_family = AF_INET;
+    m_Addr.sin_addr.s_addr = INADDR_ANY;
+    m_Addr.sin_port = htons ( port );
 
-    int bind_return = ::bind ( m_sock, ( struct sockaddr * ) &m_addr, sizeof ( m_addr ) );
+    int bind_return = ::bind ( m_Sock, ( struct sockaddr * ) &m_Addr, sizeof ( m_Addr ) );
 #endif
 
     if ( bind_return == -1 )
@@ -87,13 +87,13 @@ bool socket::bind ( const std::string ip, const int port )
         return false;
     }
 
-    m_addr.sin6_family = AF_INET6;
-    m_addr.sin6_addr = ip.c_str();
-    m_addr.sin6_port = htons ( port );
+    m_Addr.sin6_family = AF_INET6;
+    m_Addr.sin6_addr = ip.c_str();
+    m_Addr.sin6_port = htons ( port );
 
-    int bind_return = ::bind ( m_sock,
-                              ( struct sockaddr * ) &m_addr,
-                              sizeof ( m_addr ) );
+    int bind_return = ::bind ( m_Sock,
+                              ( struct sockaddr * ) &m_Addr,
+                              sizeof ( m_Addr ) );
 
     if ( bind_return == -1 )
     {
@@ -106,7 +106,7 @@ bool socket::bind ( const std::string ip, const int port )
 
 bool socketbase::send ( const std::string s ) const
 {
-    int status = ::send ( m_sock, s.c_str(), s.size(), MSG_NOSIGNAL );
+    int status = ::send ( m_Sock, s.c_str(), s.size(), MSG_NOSIGNAL );
     if ( status == -1 )
     {
         return false;
@@ -126,18 +126,18 @@ int socketbase::recv ( std::string& data ) const
     // Keep reading up to a '\r' or '\n'
 
     while ( !found ) {
-        status = ::recv(m_sock, &buffer[total], sizeof(buffer) - total - 1, 0);
+        status = ::recv(m_Sock, &buffer[total], sizeof(buffer) - total - 1, 0);
         if ( status == -1 ) {
             output::instance().addStatus(false, "status == -1   errno == " + glib::stringFromInt(errno) + "  in socketbase::recv");
             /* Error, check 'errno' for more details */
             //break;
             return 0;
         }
-        else if ( status == 0 && !recvnullok)
+        else if ( status == 0 && !m_RecvNullOk)
         {
             return 0;
         }
-        else if ( status == 0 && recvnullok)
+        else if ( status == 0 && m_RecvNullOk)
         {
             total += status;
             buffer[total] = '\0';
@@ -179,23 +179,23 @@ bool socketbase::connect ( const std::string host, const int port )
     if ( ! is_valid() ) return false;
 
 #ifdef HAVE_IPV6
-    m_addr6.sin6_family = AF_INET6;
-    m_addr6.sin6_port = htons ( port );
+    m_Addr6.sin6_family = AF_INET6;
+    m_Addr6.sin6_port = htons ( port );
 
-    int status = inet_pton ( AF_INET6, host.c_str(), &m_addr6.sin6_addr );
+    int status = inet_pton ( AF_INET6, host.c_str(), &m_Addr6.sin6_addr );
 
     if ( errno == EAFNOSUPPORT ) return false;
 
-    status = ::connect ( m_sock, ( sockaddr * ) &m_addr6, sizeof ( m_addr6 ) );
+    status = ::connect ( m_Sock, ( sockaddr * ) &m_Addr6, sizeof ( m_Addr6 ) );
 #else
-    m_addr.sin_family = AF_INET;
-    m_addr.sin_port = htons ( port );
+    m_Addr.sin_family = AF_INET;
+    m_Addr.sin_port = htons ( port );
 
-    int status = inet_pton ( AF_INET, host.c_str(), &m_addr.sin_addr );
+    int status = inet_pton ( AF_INET, host.c_str(), &m_Addr.sin_addr );
 
     if ( errno == EAFNOSUPPORT ) return false;
 
-    status = ::connect ( m_sock, ( sockaddr * ) &m_addr, sizeof ( m_addr ) );
+    status = ::connect ( m_Sock, ( sockaddr * ) &m_Addr, sizeof ( m_Addr ) );
 #endif
     if ( status == 0 )
         return true;
@@ -203,11 +203,22 @@ bool socketbase::connect ( const std::string host, const int port )
         return false;
 }
 
+bool socketbase::disconnect()
+{
+    if (m_Sock)
+    {
+        close(m_Sock);
+        m_Sock = 0;
+        return true;
+    }
+    return false;
+}
+
 bool socketbase::set_non_blocking ( const bool b )
 {
     int opts;
 
-    opts = fcntl ( m_sock, F_GETFL );
+    opts = fcntl ( m_Sock, F_GETFL );
 
     if ( opts < 0 )
     {
@@ -222,20 +233,20 @@ bool socketbase::set_non_blocking ( const bool b )
     {
         opts = ( opts & ~O_NONBLOCK );
     }
-    fcntl ( m_sock, F_SETFL, opts );
+    fcntl ( m_Sock, F_SETFL, opts );
     return true;
 }
 
 bool socketbase::set_reusable ( const int so_optval )
 {
-    if (setsockopt(m_sock, SOL_SOCKET, SO_REUSEADDR, (char *) &so_optval, sizeof(SO_REUSEADDR)) < 0)
+    if (setsockopt(m_Sock, SOL_SOCKET, SO_REUSEADDR, (char *) &so_optval, sizeof(SO_REUSEADDR)) < 0)
         return false;
     return true;
 }
 
 bool socketbase::set_v6only ( const int v6only )
 {
-    if ( setsockopt ( m_sock, IPPROTO_IPV6, IPV6_V6ONLY, &v6only, sizeof(v6only)) < 0)
+    if ( setsockopt ( m_Sock, IPPROTO_IPV6, IPV6_V6ONLY, &v6only, sizeof(v6only)) < 0)
         return false;
     return true;
 }

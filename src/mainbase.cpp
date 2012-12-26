@@ -75,7 +75,12 @@ void gdb_sighandler(int i_num, siginfo_t * i_info, void * i_val)
     {
         // Allow a little time for GDB to start before
         // dropping into the default signal handler
-        sleep(1);
+        struct timespec req, rem;
+        req.tv_sec = 1;
+        req.tv_nsec = 0;
+        rem.tv_sec = 0;
+        rem.tv_nsec = 0;
+        nanosleep(&req, &rem);
         signal(i_num, SIG_DFL);
         throw * i_info;
     }

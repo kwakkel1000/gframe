@@ -26,6 +26,7 @@
 
 #include <gframe/glib.h>
 
+#include <iterator>
 #include <iostream>
 #include <sstream>
 #include <cstring>
@@ -199,6 +200,17 @@ std::vector< int > glib::vectorTimeFromSecondsTime(int miTime, bool _WithWeeks=t
     return vTime;
 }
 
+std::vector< std::string > glib::split(std::string input)
+{
+    // construct a stream from the string
+    std::stringstream strstr(input);
+
+    // use stream iterators to copy the stream to the vector as whitespace separated strings
+    std::istream_iterator<std::string> it(strstr);
+    std::istream_iterator<std::string> end;
+    std::vector<std::string> results(it, end);
+    return results;
+}
 
 std::string glib::stringFromInt(int miInput)
 {

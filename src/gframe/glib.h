@@ -50,6 +50,8 @@ class glib
         static std::string &rtrim(std::string &s);
         static std::string &trim(std::string &s);
 
+        static std::vector< std::string > split(std::string input);
+
     private:
         glib();
         ~glib();

@@ -30,7 +30,7 @@
 
 udpsocket::udpsocket()
 {
-    recvnullok = true;
+    m_RecvNullOk = true;
 }
 
 udpsocket::~udpsocket()
@@ -40,9 +40,9 @@ udpsocket::~udpsocket()
 bool udpsocket::create()
 {
 #ifdef HAVE_IPV6
-    m_sock = socket ( AF_INET6, SOCK_DGRAM, IPPROTO_UDP );
+    m_Sock = socket ( AF_INET6, SOCK_DGRAM, IPPROTO_UDP );
 #else
-    m_sock = socket ( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
+    m_Sock = socket ( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
 #endif
     if ( ! is_valid() )
         return false;

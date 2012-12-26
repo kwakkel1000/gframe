@@ -28,7 +28,7 @@
 
 tcpsocket::tcpsocket()
 {
-    recvnullok = false;
+    m_RecvNullOk = false;
 }
 
 tcpsocket::~tcpsocket()
@@ -38,9 +38,9 @@ tcpsocket::~tcpsocket()
 bool tcpsocket::create()
 {
 #ifdef HAVE_IPV6
-    m_sock = socket ( PF_INET6, SOCK_STREAM, IPPROTO_TCP );
+    m_Sock = socket ( PF_INET6, SOCK_STREAM, IPPROTO_TCP );
 #else
-    m_sock = socket ( PF_INET, SOCK_STREAM, IPPROTO_TCP );
+    m_Sock = socket ( PF_INET, SOCK_STREAM, IPPROTO_TCP );
 #endif
 
     if ( ! is_valid() )
@@ -61,7 +61,7 @@ bool tcpsocket::listen() const
         return false;
     }
 
-    int listen_return = ::listen ( m_sock, MAXCLIENTS );
+    int listen_return = ::listen ( m_Sock, MAXCLIENTS );
 
     if ( listen_return == -1 )
     {
@@ -73,21 +73,21 @@ bool tcpsocket::listen() const
 
 /*bool tcpsocket::accept ( tcpsocket& new_socket ) const
 {
-    socklen_t socklen = sizeof(m_addr);
+    socklen_t socklen = sizeof(m_Addr);
     // Accept the new connection
-    num_of_bytes = accept(m_sock, (struct sockaddr *) &m_addr, &socklen);
+    num_of_bytes = accept(m_Sock, (struct sockaddr *) &m_Addr, &socklen);
     if (num_of_bytes == -1)
     {
-        (void) inet_ntop(m_addr.sin6_family, m_addr.sin6_addr.s6_addr, buf, BUFLEN);
+        (void) inet_ntop(m_Addr.sin6_family, m_Addr.sin6_addr.s6_addr, buf, BUFLEN);
         (void) snprintf(s, BUFLEN, "V6 Accept failed for %s %d\0",
-        buf, m_addr.sin6_port);
+        buf, m_Addr.sin6_port);
         perror(s);
     }
 
-    int addr_length = sizeof ( m_addr );
-    new_socket.num_of_bytes = ::accept ( m_sock, ( sockaddr * ) &m_addr, ( socklen_t * ) &addr_length );
+    int addr_length = sizeof ( m_Addr );
+    new_socket.num_of_bytes = ::accept ( m_Sock, ( sockaddr * ) &m_Addr, ( socklen_t * ) &addr_length );
 
-    if ( new_socket.m_sock <= 0 )
+    if ( new_socket.m_Sock <= 0 )
     {
         return false;
     }
@@ -97,107 +97,9 @@ bool tcpsocket::listen() const
     }
 }*/
 
-
-int tcpsocket::recv ( std::string& data ) const
-{
-    int status = -1, total = 0;
-    data = "";
-    char buffer[1024*1024];
-
-    status = 1;
-    total += status;
-    buffer[total] = '\0';
-    data = buffer;
-    /*int n = 1, total = 0, found = 0;
-    //char c;
-    char temp[1024*1024];
-
-    // Keep reading up to a '\n'
-
-    while (!found) {
-        n = ::recv(m_sock, &temp[total], sizeof(temp) - total - 1, 0);
-        if (n == -1) {
-            // Error, check 'errno' for more details
-            break;
-        }
-        total += n;
-        temp[total] = '\0';
-        found = (strchr(temp, '\n') != 0);
-    }
-
-    data = temp;
-    return 1;*/
-    /*int status = -1;
-    std::string buffer = "";
-    char c = '\0';
-    while(c != '\n')
-    {
-        status = ::recv(m_sock, &c, sizeof(char), 0);
-        if (c != '\r' && c != '\n')
-        {
-            buffer += c;
-        }
-        //buffer += c;
-    }
-    if ( status == -1 )
-    {
-        //std::cout << "status == -1 errno == " << errno << " in tcpsocket::recv\n";
-        return 0;
-    }
-    else if ( status == 0 )
-    {
-        return 0;
-    }
-    else
-    {
-        data = buffer;
-        return status;
-    }*/
-//    static const int buffersize(64);
-//    static char buffer[buffersize];
-//    static int length;
-//    memset(buffer, '\0', buffersize);
-//    length = 0;
-//    data = "";
-//    int num_of_bytes;
-//    char buf[BUFLEN];
-//    /*char c = '\0';
-//    while ((c != '\n') && (length < buffersize))
-//    {*/
-//        if ((num_of_bytes = ::recv(m_sock, buf, BUFLEN-1, MSG_DONTWAIT)) < 1)
-//        {
-//            //Disconnect();
-//            return 0;
-//        }
-//        buf[num_of_bytes]=0;
-//        /*if (c != '\r' && c != '\n') // This will not work when sending non-ascii data
-//        {
-//            buffer[length] = c;
-//            length++;
-//
-//            // In the very weird case the buffer does not have enough space...
-//            if (length == buffersize-1)
-//            {
-//                data += std::string(buffer);
-//                std::cout << "buffer overflow: buffer " << data << std::endl;
-//                memset(buffer, '\0', buffersize);
-//                length = 0;
-//            }
-//        }*/
-//
-//    /*}*/
-//    data += std::string(buffer);
-//    /*if (length > 0)
-//    {
-//        data += std::string(buffer);
-//    }*/
-//    return 1;
-    return 0;
-}
-
 void tcpsocket::init_listen()
 {
-    maxfd = (fileno(stdin) > m_sock ? fileno(stdin) : m_sock);
+    maxfd = (fileno(stdin) > m_Sock ? fileno(stdin) : m_Sock);
     nclients = 0;
 }
 
@@ -215,8 +117,8 @@ int tcpsocket::select_listen(std::string& data, int& nclient)
     FD_ZERO(&read_fds);
     FD_ZERO(&write_fds);
     FD_ZERO(&except_fds);
-    FD_SET(m_sock, &read_fds);
-    FD_SET(m_sock, &except_fds);
+    FD_SET(m_Sock, &read_fds);
+    FD_SET(m_Sock, &except_fds);
     for (int nclients_iterator = 0; nclients_iterator < nclients; nclients_iterator++)
     {
         snprintf(s, BUFLEN, "FD_SET %d [%d] for read and exceptions.\n", nclients_iterator, clients[nclients_iterator]);
@@ -228,7 +130,7 @@ int tcpsocket::select_listen(std::string& data, int& nclient)
     select(maxfd + 1, &read_fds, &write_fds, &except_fds, NULL);
 
     /* Process an exception on the socket itself */
-    if (FD_ISSET(m_sock, &except_fds))
+    if (FD_ISSET(m_Sock, &except_fds))
     {
         perror("Exception on socket.");
         fprintf(stderr, "Exiting.\n");
@@ -236,28 +138,28 @@ int tcpsocket::select_listen(std::string& data, int& nclient)
     }
 
     /* A read event on the socket is a new connection */
-    if (FD_ISSET(m_sock, &read_fds))
+    if (FD_ISSET(m_Sock, &read_fds))
     {
 #ifdef HAVE_IPV6
-        socklen_t socklen = sizeof(m_addr6);
+        socklen_t socklen = sizeof(m_Addr6);
         /* Accept the new connection */
-        rval = ::accept(m_sock, (struct sockaddr *) &m_addr6, &socklen);
+        rval = ::accept(m_Sock, (struct sockaddr *) &m_Addr6, &socklen);
         if (rval == -1)
         {
-            (void) inet_ntop(m_addr6.sin6_family, m_addr6.sin6_addr.s6_addr, buf, BUFLEN);
-            //(void) snprintf(s, BUFLEN, "V6 Accept failed for %s %d\0", buf, m_addr.sin6_port);
-            (void) snprintf(s, BUFLEN, "V6 Accept failed for %s %d", buf, m_addr6.sin6_port);
+            (void) inet_ntop(m_Addr6.sin6_family, m_Addr6.sin6_addr.s6_addr, buf, BUFLEN);
+            //(void) snprintf(s, BUFLEN, "V6 Accept failed for %s %d\0", buf, m_Addr.sin6_port);
+            (void) snprintf(s, BUFLEN, "V6 Accept failed for %s %d", buf, m_Addr6.sin6_port);
             perror(s);
         }
 #else
-        socklen_t socklen = sizeof(m_addr);
+        socklen_t socklen = sizeof(m_Addr);
         /* Accept the new connection */
-        rval = ::accept(m_sock, (struct sockaddr *) &m_addr, &socklen);
+        rval = ::accept(m_Sock, (struct sockaddr *) &m_Addr, &socklen);
         if (rval == -1)
         {
-            (void) inet_ntop(m_addr.sin_family, &(m_addr.sin_addr), buf, BUFLEN);  // << faulty
-            //(void) snprintf(s, BUFLEN, "V6 Accept failed for %s %d\0", buf, m_addr.sin6_port);
-            (void) snprintf(s, BUFLEN, "V4 Accept failed for %s %d", buf, m_addr.sin_port);
+            (void) inet_ntop(m_Addr.sin_family, &(m_Addr.sin_addr), buf, BUFLEN);  // << faulty
+            //(void) snprintf(s, BUFLEN, "V6 Accept failed for %s %d\0", buf, m_Addr.sin6_port);
+            (void) snprintf(s, BUFLEN, "V4 Accept failed for %s %d", buf, m_Addr.sin_port);
             perror(s);
         }
 #endif
@@ -276,13 +178,13 @@ int tcpsocket::select_listen(std::string& data, int& nclient)
                 clients[nclients++] = rval;
                 if (rval > maxfd) maxfd = rval;
 #ifdef HAVE_IPV6
-                (void) inet_ntop(m_addr6.sin6_family, m_addr6.sin6_addr.s6_addr, buf, BUFLEN);
+                (void) inet_ntop(m_Addr6.sin6_family, m_Addr6.sin6_addr.s6_addr, buf, BUFLEN);
                 snprintf(s, BUFLEN, "Accepted V6 connection from %s %d as %d\n",
-                buf, m_addr6.sin6_port, rval);
+                buf, m_Addr6.sin6_port, rval);
 #else
-                (void) inet_ntop(m_addr.sin_family, &(m_addr.sin_addr), buf, BUFLEN); // << faulty
+                (void) inet_ntop(m_Addr.sin_family, &(m_Addr.sin_addr), buf, BUFLEN); // << faulty
                 snprintf(s, BUFLEN, "Accepted V4 connection from %s %d as %d\n",
-                buf, m_addr.sin_port, rval);
+                buf, m_Addr.sin_port, rval);
 #endif
                 //snprintf(s, BUFLEN, "You are client %d [%d]. You are now connected.\n\0", nclients, rval);
                 snprintf(s, BUFLEN, "You are client %d [%d]. You are now connected.\n", nclients, rval);
@@ -342,7 +244,7 @@ int tcpsocket::select_listen(std::string& data, int& nclient)
     }
     /* Remove disconnected clients from list and recompute maxfd */
     maxfd = fileno(stdin);
-    if (m_sock > maxfd) maxfd = m_sock;
+    if (m_Sock > maxfd) maxfd = m_Sock;
     /* Iterate through and condense list of clients */
     for(int nclients_iterator = 0; nclients_iterator < nclients; nclients_iterator++)
     {
