@@ -4,7 +4,7 @@ GIT_VERSION = $(shell sh -c 'git describe --abbrev=4 --dirty --always')
 
 ACLOCAL_AMFLAGS = -I ../m4
 
-GFRAME_LIBRARY_VERSION=2:3:0
+GFRAME_LIBRARY_VERSION=2:4:0
 
 lib_LTLIBRARIES = libgframe.la
 

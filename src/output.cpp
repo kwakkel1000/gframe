@@ -65,51 +65,59 @@ void output::setLogFile(std::string msLogFile)
     sLogFile = msLogFile;
 }
 
-void output::addStatus(bool bSuccess, std::string sOutput)
+std::string output::addStatus(bool bSuccess, std::string sOutput)
 {
+    std::string outputString;
     if (bSuccess)
     {
         if (2 <= iOutputLevel)
         {
-            std::cout << "\033[1m\033[34m[\033[32m ok \033[34m]\033[39m\033[22m " << sOutput << std::endl;
+            outputString = "\033[1m\033[34m[\033[32m ok \033[34m]\033[39m\033[22m " + sOutput;
+            std::cout << outputString << std::endl;
 #ifdef USE_SYSLOG
             appendSyslog("[ ok ] " + sOutput, 5);
 #endif
 #ifdef USE_FILELOG
             appendLog("[ ok ] " + sOutput, 2);
 #endif
+            return outputString;
         }
     }
     else
     {
-        std::cout << "\033[1m\033[34m[\033[31m !! \033[34m]\033[39m\033[22m " << sOutput << std::endl;
+        outputString = "\033[1m\033[34m[\033[31m !! \033[34m]\033[39m\033[22m " + sOutput;
+        std::cout << outputString << std::endl;
 #ifdef USE_SYSLOG
         appendSyslog("[ !! ] " + sOutput, 3);
 #endif
 #ifdef USE_FILELOG
         appendLog("[ !! ] " + sOutput, 1);
 #endif
+    return outputString;
     }
 }
 
-void output::addOutput(std::string sOutput)
+std::string output::addOutput(std::string sOutput)
 {
-    addOutput(sOutput, 5);
+    return addOutput(sOutput, 5);
 }
 
-void output::addOutput(std::string sOutput, int iLevel)
+std::string output::addOutput(std::string sOutput, int iLevel)
 {
     std::lock_guard<std::mutex> outputlock(m_outputMutex);
-    if (iLevel <= iOutputLevel)
-    {
-        std::cout << "\033[1m\033[34m[\033[33m ** \033[34m] [\033[32m" << glib::stringFromInt(iLevel) << "\033[34m] \033[0m" << sOutput << std::endl;
-    }
+    std::string outputString = "";
 #ifdef USE_SYSLOG
     appendLog("[ ** ] " + sOutput, iLevel);
 #endif
 #ifdef USE_SYSLOG
     appendSyslog("[ ** ] " + sOutput, iLevel);
 #endif
+    if (iLevel <= iOutputLevel)
+    {
+        outputString = "\033[1m\033[34m[\033[33m ** \033[34m] [\033[32m" + glib::stringFromInt(iLevel) + "\033[34m] \033[0m" + sOutput;
+        std::cout << outputString << std::endl;
+    }
+    return outputString;
 }
 
 

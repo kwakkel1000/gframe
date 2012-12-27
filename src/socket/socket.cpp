@@ -119,18 +119,21 @@ bool socketbase::send ( const std::string s ) const
 
 int socketbase::recv ( std::string& data ) const
 {
-    int status = -1, total = 0, found = 0;
+    static const int buffersize(256);
+    int status = -1;//, total = 0, foundn = 0, foundr = 0;
     data = "";
-    char buffer[1024*1024];
+    int length = 0;
+    char buffer[buffersize];
+    memset(buffer, '\0', buffersize);
 
     // Keep reading up to a '\r' or '\n'
-
-    while ( !found ) {
-        status = ::recv(m_Sock, &buffer[total], sizeof(buffer) - total - 1, 0);
-        if ( status == -1 ) {
+    char c = '\0';
+    while ( (c != '\n') && (length < buffersize))
+    {
+        status = ::recv(m_Sock, &c, sizeof(char), 0);
+        if ( status == -1 )
+        {
             output::instance().addStatus(false, "status == -1   errno == " + glib::stringFromInt(errno) + "  in socketbase::recv");
-            /* Error, check 'errno' for more details */
-            //break;
             return 0;
         }
         else if ( status == 0 && !m_RecvNullOk)
@@ -139,17 +142,23 @@ int socketbase::recv ( std::string& data ) const
         }
         else if ( status == 0 && m_RecvNullOk)
         {
-            total += status;
-            buffer[total] = '\0';
+            buffer[length] = c;
             data = buffer;
             return 1;
         }
-        total += status;
-        buffer[total] = '\0';
-        //found = (strchr(buffer, '\n') != 0);
-        found = (strchr(buffer, '\r') != 0 || strchr(buffer, '\n') != 0);
+        if ((c != '\n') && (c != '\r'))
+        {
+            buffer[length] = c;
+            length++;
+            if (length == buffersize-1)
+            {
+                data += std::string(buffer);
+                memset(buffer, '\0', buffersize);
+                length = 0;
+            }
+        }
     }
-    data = buffer;
+    data += buffer;
     return status;
 }
 
@@ -176,7 +185,86 @@ const socketbase& socketbase::operator << ( const std::string& data ) const
 
 bool socketbase::connect ( const std::string host, const int port )
 {
+    std::string service = glib::stringFromInt(port);
     if ( ! is_valid() ) return false;
+
+    struct addrinfo *res, *aip;
+    struct addrinfo hints;
+    int error;
+
+    // Get host address. Any type of address will do
+    bzero(&hints, sizeof(hints));
+    hints.ai_flags = AI_ALL|AI_ADDRCONFIG;
+    hints.ai_socktype = SOCK_STREAM;
+
+    error = getaddrinfo(host.c_str(), service.c_str(), &hints, &res);
+    if (error != 0)
+    {
+        //throw Exception("Could not get address info", errno);
+        return false;
+    }
+
+    // Try all returned addresses until one works
+    for (aip = res; aip != NULL; aip = aip->ai_next)
+    {
+        // Open socket. The address type depends on what getaddrinfo() gave us
+        m_Sock = socket(aip->ai_family, aip->ai_socktype, aip->ai_protocol);
+        if (m_Sock == -1)
+        {
+            m_Sock = 0;
+            freeaddrinfo(res);
+            //throw Exception("Could not ceate socket", errno);
+            return false;
+        }
+
+        // Connect to the host
+        if (::connect(m_Sock, aip->ai_addr, aip->ai_addrlen) == -1)
+        {
+            close(m_Sock);
+            m_Sock = 0;
+        }
+        else
+        {
+            // Store connectiond data
+            /*
+cout << "Connected to " << aip->ai_canonname << "! flags=" << aip->ai_flags
+<< " family=" << aip->ai_family << " socktype=" << aip->ai_socktype
+<< " protocol=" << aip->ai_protocol << endl;
+*/
+            /*
+struct addrinfo {
+int ai_flags;
+int ai_family;
+int ai_socktype;
+int ai_protocol;
+size_t ai_addrlen;
+struct sockaddr *ai_addr;
+char *ai_canonname;
+struct addrinfo *ai_next;
+};
+m_hostname = phost->h_name;
+m_port = port;
+*/
+
+            break; // break out of for loop, because we managed to connect!
+        }
+    }
+
+    // Clean up :+
+    freeaddrinfo(res);
+
+    if (!m_Sock)
+    {
+        //throw Exception("Could not connect to host");
+        return false;
+    }
+    return true;
+
+
+
+
+/*
+
 
 #ifdef HAVE_IPV6
     m_Addr6.sin6_family = AF_INET6;
@@ -200,7 +288,7 @@ bool socketbase::connect ( const std::string host, const int port )
     if ( status == 0 )
         return true;
     else
-        return false;
+        return false;*/
 }
 
 bool socketbase::disconnect()

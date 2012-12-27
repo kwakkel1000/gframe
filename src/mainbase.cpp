@@ -264,7 +264,8 @@ m_Foreground(false)
     m_PidFile = m_PidFileLocation + m_Name + ".pid";
     m_IniFile = "conf/" + m_Name + ".ini";
     SetupSignal();
-    versions::instance().addVersion("Copyright (c) 2012 Gijs Kwakkel");
+    char *CopyrightChar = "\xa9";
+    versions::instance().addVersion("Copyright " + std::string(CopyrightChar) + " 2012 Gijs Kwakkel");
     versions::instance().addVersion("GNU Version 2");
     versions::instance().addVersion(gNAME + " " + gVERSION + " " + gGITVERSION);
     addHelpItem("Runs the " + m_Name +
@@ -439,7 +440,8 @@ int mainbase::run()
     output::instance().addOutput(startBlock, 2);
     output::instance().addOutput("+ Start " + m_Name + " on " + output::instance().sFormatTime("%d-%m-%Y %H:%M:%S") + " +", 2);
     output::instance().addOutput(startBlock, 2);
-    if(!configreader::instance().readFile(m_IniFile))
+    configreader::instance().set_ConfigFile(m_IniFile);
+    if(!configreader::instance().readFile())
     {
         return 1;
     }

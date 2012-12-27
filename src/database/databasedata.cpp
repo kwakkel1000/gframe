@@ -83,7 +83,7 @@ void databasedata::init(database* db, std::string filename)
 * @return result of data in a vector
 *
 */
-std::vector< std::string > databasedata::get(std::string msWhere, std::string msKey, std::string msCondition)
+std::vector< std::string > databasedata::get(std::string msWhere, std::string msKey)
 {
     std::string _sSqlString;
     _sSqlString = _sSqlString + "SELECT ";
@@ -91,8 +91,7 @@ std::vector< std::string > databasedata::get(std::string msWhere, std::string ms
     _sSqlString = _sSqlString + msKey;
     _sSqlString = _sSqlString + "` FROM `";
     _sSqlString = _sSqlString + msWhere;
-    _sSqlString = _sSqlString + "` WHERE ";
-    _sSqlString = _sSqlString + msCondition;
+    _sSqlString = _sSqlString + "`;";
     output::instance().addOutput(_sSqlString, 9);
     std::vector< std::vector< std::string > > _vSqlResult;
     std::vector< std::string > _vDataResult;
@@ -103,6 +102,63 @@ std::vector< std::string > databasedata::get(std::string msWhere, std::string ms
         {
             _vDataResult.push_back(_vSqlResult[_uiSqlResultIndex][0]);
         }
+    }
+    return _vDataResult;
+}
+std::vector< std::string > databasedata::get(std::string msWhere, std::string msKey, std::string msCondition)
+{
+    std::string _sSqlString;
+    _sSqlString = _sSqlString + "SELECT ";
+    _sSqlString = _sSqlString + " `";
+    _sSqlString = _sSqlString + msKey;
+    _sSqlString = _sSqlString + "` FROM `";
+    _sSqlString = _sSqlString + msWhere;
+    _sSqlString = _sSqlString + "` WHERE ";
+    _sSqlString = _sSqlString + msCondition;
+    _sSqlString = _sSqlString + ";";
+    output::instance().addOutput(_sSqlString, 9);
+    std::vector< std::vector< std::string > > _vSqlResult;
+    std::vector< std::string > _vDataResult;
+    _vSqlResult= raw_sql(_sSqlString);
+    for (unsigned int _uiSqlResultIndex = 0; _uiSqlResultIndex < _vSqlResult.size(); _uiSqlResultIndex++)
+    {
+        if (_vSqlResult[_uiSqlResultIndex].size() == 1)
+        {
+            _vDataResult.push_back(_vSqlResult[_uiSqlResultIndex][0]);
+        }
+    }
+    return _vDataResult;
+}
+
+std::vector< std::map< std::string, std::string > > databasedata::get(std::string msWhere, std::vector< std::string > mvKeys)
+{
+    std::string _sSqlString;
+    _sSqlString = _sSqlString + "SELECT ";
+    _sSqlString = _sSqlString + " `";
+    for (size_t uiKeysIndex = 0; uiKeysIndex < mvKeys.size() -1; uiKeysIndex++)
+    {
+        _sSqlString = _sSqlString + mvKeys[uiKeysIndex];
+        _sSqlString = _sSqlString + "`, `";
+    }
+    if (mvKeys.size() >= 1)
+    {
+        _sSqlString = _sSqlString + mvKeys[mvKeys.size() -1];
+    }
+    _sSqlString = _sSqlString + "` FROM `";
+    _sSqlString = _sSqlString + msWhere;
+    _sSqlString = _sSqlString + "`;";
+    output::instance().addOutput(_sSqlString, 9);
+    std::vector< std::vector< std::string > > _vSqlResult;
+    std::vector< std::map < std::string, std::string > > _vDataResult;
+    _vSqlResult= raw_sql(_sSqlString);
+    for (size_t _uiSqlResultIndex = 0; _uiSqlResultIndex < _vSqlResult.size(); _uiSqlResultIndex++)
+    {
+        std::map< std::string, std::string > _mData;
+        for (size_t _uiSqlResultIndexIndex = 0; _uiSqlResultIndexIndex < _vSqlResult[_uiSqlResultIndex].size(); _uiSqlResultIndexIndex++)
+        {
+            _mData[glib::toLower(mvKeys[_uiSqlResultIndexIndex])] = _vSqlResult[_uiSqlResultIndex][_uiSqlResultIndexIndex];
+        }
+        _vDataResult.push_back(_mData);
     }
     return _vDataResult;
 }
@@ -125,6 +181,7 @@ std::vector< std::map< std::string, std::string > > databasedata::get(std::strin
     _sSqlString = _sSqlString + msWhere;
     _sSqlString = _sSqlString + "` WHERE ";
     _sSqlString = _sSqlString + msCondition;
+    _sSqlString = _sSqlString + ";";
     output::instance().addOutput(_sSqlString, 9);
     std::vector< std::vector< std::string > > _vSqlResult;
     std::vector< std::map < std::string, std::string > > _vDataResult;
@@ -140,6 +197,7 @@ std::vector< std::map< std::string, std::string > > databasedata::get(std::strin
     }
     return _vDataResult;
 }
+
 bool databasedata::del(std::string msWhere, std::string msCondition)
 {
     std::string _sSqlString;

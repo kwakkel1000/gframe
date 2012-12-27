@@ -48,9 +48,9 @@ class output
         void openLog();
         void closeLog();
 
-        void addStatus(bool bSuccess, std::string sOutput);
-        void addOutput(std::string sOutput);
-        void addOutput(std::string sOutput, int iLevel);
+        std::string addStatus(bool bSuccess, std::string sOutput);
+        std::string addOutput(std::string sOutput);
+        std::string addOutput(std::string sOutput, int iLevel);
         void appendSyslog(std::string sOutput);
         void appendSyslog(std::string sOutput, int iLevel);
         void appendLog(std::string sOutput);

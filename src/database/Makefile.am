@@ -10,7 +10,7 @@ if SQLITE3
   SQLITE3_SOURCES = sqlitedatabase.cpp
 endif
 
-GFRAME_DATABASE_LIBRARY_VERSION=1:0:0
+GFRAME_DATABASE_LIBRARY_VERSION=1:1:0
 
 lib_LTLIBRARIES = libgframe_database.la
 
