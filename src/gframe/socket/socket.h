@@ -62,13 +62,11 @@ class socketbase
 
         // Data Transimission
         virtual bool send (const std::string) const;
-        virtual int recv (std::string&) const;
+        virtual int recv (std::string&) const =0;
         const socketbase& operator << (const std::string&) const;
         const socketbase& operator >> (std::string&) const;
 
     protected:
-
-        bool m_RecvNullOk;
 
         int m_Sock;
 #ifdef HAVE_IPV6

@@ -117,54 +117,9 @@ bool socketbase::send ( const std::string s ) const
     }
 }
 
-int socketbase::recv ( std::string& data ) const
-{
-    static const int buffersize(256);
-    int status = -1;//, total = 0, foundn = 0, foundr = 0;
-    data = "";
-    int length = 0;
-    char buffer[buffersize];
-    memset(buffer, '\0', buffersize);
-
-    // Keep reading up to a '\r' or '\n'
-    char c = '\0';
-    while ( (c != '\n') && (length < buffersize))
-    {
-        status = ::recv(m_Sock, &c, sizeof(char), 0);
-        if ( status == -1 )
-        {
-            output::instance().addStatus(false, "status == -1   errno == " + glib::stringFromInt(errno) + "  in socketbase::recv");
-            return 0;
-        }
-        else if ( status == 0 && !m_RecvNullOk)
-        {
-            return 0;
-        }
-        else if ( status == 0 && m_RecvNullOk)
-        {
-            buffer[length] = c;
-            data = buffer;
-            return 1;
-        }
-        if ((c != '\n') && (c != '\r'))
-        {
-            buffer[length] = c;
-            length++;
-            if (length == buffersize-1)
-            {
-                data += std::string(buffer);
-                memset(buffer, '\0', buffersize);
-                length = 0;
-            }
-        }
-    }
-    data += buffer;
-    return status;
-}
-
 const socketbase& socketbase::operator >> ( std::string& data ) const
 {
-    if ( ! socketbase::recv ( data ) )
+    if ( ! recv ( data ) )
     {
         output::instance().addStatus(false, "Could not read from socket.");
         throw "Could not read from socket.";
@@ -174,7 +129,7 @@ const socketbase& socketbase::operator >> ( std::string& data ) const
 
 const socketbase& socketbase::operator << ( const std::string& data ) const
 {
-    if ( ! socketbase::send ( data ) )
+    if ( ! send ( data ) )
     {
         output::instance().addStatus(false, "Could not write to socket.");
         throw "Could not write to socket.";

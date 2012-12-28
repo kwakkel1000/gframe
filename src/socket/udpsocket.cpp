@@ -27,10 +27,11 @@
 
 #include <gframe/config.h>
 #include <gframe/socket/udpsocket.h>
+#include <gframe/glib.h>
+#include <gframe/output.h>
 
 udpsocket::udpsocket()
 {
-    m_RecvNullOk = true;
 }
 
 udpsocket::~udpsocket()
@@ -51,4 +52,35 @@ bool udpsocket::create()
         return false;
 #endif
     return true;
+}
+
+int udpsocket::recv ( std::string& data ) const
+{
+    int status = -1, total = 0, found = 0;
+    data = "";
+    char buffer[1024*1024];
+
+    // Keep reading up to a '\r' or '\n'
+
+    while ( !found ) {
+        status = ::recv(m_Sock, &buffer[total], sizeof(buffer) - total - 1, 0);
+        if ( status == -1 ) {
+            output::instance().addStatus(false, "status == -1 errno == " + glib::stringFromInt(errno) + " in udpsocket::recv");
+            /* Error, check 'errno' for more details */
+            //break;
+            return 0;
+        }
+        else if ( status == 0)
+        {
+            total += status;
+            buffer[total] = '\0';
+            data = buffer;
+            return 1;
+        }
+        total += status;
+        buffer[total] = '\0';
+        found = (strchr(buffer, '\r') != 0 || strchr(buffer, '\n') != 0);
+    }
+    data = buffer;
+    return status;
 }

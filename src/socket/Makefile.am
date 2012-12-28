@@ -3,7 +3,7 @@ ACLOCAL_AMFLAGS = -I ../../m4
 
 lib_LTLIBRARIES = libgframe_socket.la
 
-GFRAME_SOCKET_LIBRARY_VERSION=2:2:0
+GFRAME_SOCKET_LIBRARY_VERSION=2:3:0
 
 libgframe_socket_includedir = $(includedir)/gframe/socket
 

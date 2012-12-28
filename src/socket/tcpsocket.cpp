@@ -24,11 +24,12 @@
 
 #include <gframe/config.h>
 #include <gframe/socket/tcpsocket.h>
+#include <gframe/glib.h>
+#include <gframe/output.h>
 
 
 tcpsocket::tcpsocket()
 {
-    m_RecvNullOk = false;
 }
 
 tcpsocket::~tcpsocket()
@@ -54,6 +55,51 @@ bool tcpsocket::create()
     return true;
 }
 
+
+int tcpsocket::recv ( std::string& data ) const
+{
+    static const int buffersize(256);
+    int status = -1;//, total = 0, foundn = 0, foundr = 0;
+    data = "";
+    int length = 0;
+    char buffer[buffersize];
+    memset(buffer, '\0', buffersize);
+
+    // Keep reading up to a '\r' or '\n'
+    char c = '\0';
+    while ( (c != '\n') && (c != '\r') && (length < buffersize))
+    {
+        status = ::recv(m_Sock, &c, sizeof(char), 0);
+        output::instance().addOutput("status: " + glib::stringFromInt(status)  + " c: " + std::string(&c), 15);
+        if ( status == -1 )
+        {
+            output::instance().addStatus(false, "status == -1   errno == " + glib::stringFromInt(errno) + "  in tcpsocket::recv");
+            return 0;
+        }
+        else if ( status == 0 )
+        {
+            output::instance().addStatus(false, "status == 0    (TCP)no data in tcpsocket::recv");
+            return 0;
+        }
+        if ((c != '\n') && (c != '\r'))
+        {
+            buffer[length] = c;
+            length++;
+            if (length == buffersize-1)
+            {
+                data += std::string(buffer);
+                memset(buffer, '\0', buffersize);
+                length = 0;
+            }
+        }
+    }
+    data += buffer;
+    return status;
+}
+
+
+
+
 bool tcpsocket::listen() const
 {
     if ( ! is_valid() )
@@ -73,19 +119,18 @@ bool tcpsocket::listen() const
 
 /*bool tcpsocket::accept ( tcpsocket& new_socket ) const
 {
-    socklen_t socklen = sizeof(m_Addr);
+    socklen_t socklen = sizeof(m_Addr6);
     // Accept the new connection
-    num_of_bytes = accept(m_Sock, (struct sockaddr *) &m_Addr, &socklen);
+    int num_of_bytes = ::accept(m_Sock, (struct sockaddr *) &m_Addr6, &socklen);
     if (num_of_bytes == -1)
     {
-        (void) inet_ntop(m_Addr.sin6_family, m_Addr.sin6_addr.s6_addr, buf, BUFLEN);
-        (void) snprintf(s, BUFLEN, "V6 Accept failed for %s %d\0",
-        buf, m_Addr.sin6_port);
+        (void) inet_ntop(m_Addr6.sin6_family, m_Addr6.sin6_addr.s6_addr, buf, BUFLEN);
+        (void) snprintf(s, BUFLEN, "V6 Accept failed for %s %d\0", buf, m_Addr6.sin6_port);
         perror(s);
     }
 
-    int addr_length = sizeof ( m_Addr );
-    new_socket.num_of_bytes = ::accept ( m_Sock, ( sockaddr * ) &m_Addr, ( socklen_t * ) &addr_length );
+    int addr_length = sizeof ( m_Addr6 );
+    new_socket.num_of_bytes = ::accept ( m_Sock, ( sockaddr * ) &m_Addr6, ( socklen_t * ) &addr_length );
 
     if ( new_socket.m_Sock <= 0 )
     {

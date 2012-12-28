@@ -39,8 +39,10 @@ class tcpsocket : public socketbase
         // Server initialization
         bool create();
 
+        virtual int recv (std::string&) const;
+
         bool listen() const;
-        //bool accept ( tcpsocket& ) const;
+        bool accept ( tcpsocket& ) const;
 
         void init_listen();
         int select_listen(std::string&, int&);

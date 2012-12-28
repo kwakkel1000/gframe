@@ -35,6 +35,8 @@ class udpsocket : public socketbase
 
         // Server initialization
         bool create();
+
+        virtual int recv (std::string&) const;
 };
 
 
