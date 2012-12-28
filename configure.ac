@@ -12,7 +12,6 @@ AC_CONFIG_MACRO_DIR([m4])
 LT_PREREQ([2.2])
 LT_INIT([dlopen])
 
-
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_AWK
@@ -34,11 +33,14 @@ AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h stdlib.h string.h sys
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_CHECK_HEADER_STDBOOL
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
+AC_TYPE_SSIZE_T
 
 # Checks for library functions.
-AC_CHECK_FUNCS([mkdir])
-AC_CHECK_FUNCS([strerror])
 AC_FUNC_FORK
+AC_FUNC_MALLOC
+AC_CHECK_FUNCS([bzero localtime_r memset mkdir select socket strchr strerror strstr])
 
 ########  begin socket    ##############
 

@@ -264,8 +264,7 @@ m_Foreground(false)
     m_PidFile = m_PidFileLocation + m_Name + ".pid";
     m_IniFile = "conf/" + m_Name + ".ini";
     SetupSignal();
-    char *CopyrightChar = "\xa9";
-    versions::instance().addVersion("Copyright " + std::string(CopyrightChar) + " 2012 Gijs Kwakkel");
+    versions::instance().addVersion("Copyright \xa9 2012 Gijs Kwakkel");
     versions::instance().addVersion("GNU Version 2");
     versions::instance().addVersion(gNAME + " " + gVERSION + " " + gGITVERSION);
     addHelpItem("Runs the " + m_Name +

@@ -93,8 +93,8 @@ std::string output::addStatus(bool bSuccess, std::string sOutput)
 #ifdef USE_FILELOG
         appendLog("[ !! ] " + sOutput, 1);
 #endif
-    return outputString;
     }
+    return outputString;
 }
 
 std::string output::addOutput(std::string sOutput)
