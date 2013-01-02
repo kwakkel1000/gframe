@@ -2,11 +2,11 @@
 //
 // @ Project : gframe
 // @ File Name : mainbase.h
-// @ Date : 31-10-2012
+// @ Date : 02-01-2013
 // @ Author : Gijs Kwakkel
 //
 //
-// Copyright (c) 2012 Gijs Kwakkel
+// Copyright (c) 2013 Gijs Kwakkel
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -72,6 +72,7 @@ class mainbase
         void writePidFile(int Pid);
 
         int daemonize(bool Daemonize);
+        std::vector< std::string > m_Argv;
 
         bool m_Forever;
         bool m_INeedRoot;

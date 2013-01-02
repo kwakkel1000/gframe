@@ -1,12 +1,12 @@
 //
 //
-// @ Project : grame
+// @ Project : gframe
 // @ File Name : mainbase.cpp
-// @ Date : 31-10-2012
+// @ Date : 02-01-2013
 // @ Author : Gijs Kwakkel
 //
 //
-// Copyright (c) 2012 Gijs Kwakkel
+// Copyright (c) 2013 Gijs Kwakkel
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -301,7 +301,8 @@ mainbase::~mainbase()
 
 void mainbase::parseArgs(std::vector<std::string> args)
 {
-    for (uint nArg = 0; nArg < args.size(); nArg++)
+    m_Argv = args;
+    for (size_t nArg = 0; nArg < args.size(); nArg++)
     {
         if (args[nArg] == "--help" || args[nArg] == "-h")
         {
@@ -392,7 +393,6 @@ int mainbase::run()
 #ifdef USE_FILELOG
     m_LogFile = m_LogFileLocation + m_Name + ".log";
 #endif
-    versions::instance().showVersion();
     if (readPidFile())
     {
         return 1;
@@ -439,6 +439,13 @@ int mainbase::run()
     output::instance().addOutput(startBlock, 2);
     output::instance().addOutput("+ Start " + m_Name + " on " + output::instance().sFormatTime("%d-%m-%Y %H:%M:%S") + " +", 2);
     output::instance().addOutput(startBlock, 2);
+    std::string argvstring = "";
+    for (size_t argvIterator = 0; argvIterator < m_Argv.size(); argvIterator++)
+    {
+        argvstring += m_Argv[argvIterator] + " ";
+    }
+    output::instance().addOutput(argvstring, 2);
+    versions::instance().showVersion();
     configreader::instance().set_ConfigFile(m_IniFile);
     if(!configreader::instance().readFile())
     {
