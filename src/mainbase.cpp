@@ -25,17 +25,34 @@
 #include <gframe/mainbase.h>
 #include <gframe/config.h>
 #include <gframe/versions.h>
-
-#include <sys/stat.h>
-#include <sys/types.h>
+#include <gframe/glib.h>
+#include <gframe/output.h>
+#include <gframe/configreader.h>
 
 #include <fstream>
-#include <string>
 #include <sstream>
 #include <cstring>
-#include <vector>
+
+#include <signal.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <unistd.h>
+#include <syslog.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <grp.h>
 #include <pwd.h>
+
+
+//void gdb_sighandler(int i_num, siginfo_t * i_info, void * i_val);
+//void SegFaultAction(int i_num, siginfo_t * i_info, void * i_val);
+//void TermAction(int i_num, siginfo_t * i_info, void * i_val);
+//void Usr1Action(int i_num, siginfo_t * i_info, void * i_val);
 
 extern "C" void libgframe_is_present(void)
 {
@@ -45,6 +62,8 @@ std::string gNAME = PACKAGE;
 std::string gVERSION = VERSION;
 std::string gGITVERSION = __GIT_VERSION;
 
+
+// ### signal handlers ###
 void gdb_sighandler(int i_num, siginfo_t * i_info, void * i_val)
 {
 #ifdef GDBDEBUG
@@ -176,8 +195,100 @@ void Usr1Action(int i_num, siginfo_t * i_info, void * i_val)
     output::instance().addOutput("+ SIGUSR1 (rotate log) on " + output::instance().sFormatTime("%d-%m-%Y %H:%M:%S") + " +", 2);
     output::instance().addOutput(startBlock, 2);
 }
+// ### end signal handlers ###
 
-void mainbase::SetupSignal()
+// ### mainbase implementation ###
+class mainbase::impl
+{
+    public:
+        impl(std::string name);
+        ~impl();
+        void setupSignal();
+        bool isRoot();
+        bool dropRoot();
+
+        bool createDirectory(std::string directory);
+
+        bool readPidFile();
+        void writePidFile(int Pid);
+
+        int daemonize(bool Daemonize);
+        std::vector< std::string > m_Argv;
+
+        void parseArgs(std::vector<std::string> args);
+        int run();
+
+        void showHelp();
+        void addHelpItem(std::string helpItem);
+
+        bool m_Forever;
+        bool m_INeedRoot;
+        bool m_DropRoot;
+        bool m_Foreground;
+        std::string m_Uid;
+        std::string m_Gid;
+        std::string m_Name;
+        std::string m_Syslog;
+        std::string m_LogFileLocation;
+        std::string m_PidFileLocation;
+        std::string m_IniFile;
+        std::string m_PidFile;
+        std::string m_LogFile;
+        std::vector< std::string > m_HelpItems;
+};
+
+mainbase::impl::impl(std::string name) :
+m_INeedRoot(false),
+m_DropRoot(false),
+m_Foreground(false)
+{
+    m_Name = name;
+    m_Syslog = m_Name;
+#ifdef USE_FILELOG
+    m_LogFileLocation = "log/";
+    m_LogFile = m_LogFileLocation + m_Name + ".log";
+#endif
+    m_PidFileLocation = "/var/run/" + m_Name + "/";
+    m_PidFile = m_PidFileLocation + m_Name + ".pid";
+    m_IniFile = "conf/" + m_Name + ".ini";
+    setupSignal();
+    versions::instance().addVersion("Copyright \xa9 2012 Gijs Kwakkel");
+    versions::instance().addVersion("GNU Version 2");
+    versions::instance().addVersion(gNAME + " " + gVERSION + " " + gGITVERSION);
+    addHelpItem("Runs the " + m_Name +
+        " (default as " + m_Name +
+        ", " + m_PidFile +
+#ifdef USE_FILELOG
+        ", " + m_LogFile +
+#endif
+        ", " + m_IniFile +
+        ")");
+    addHelpItem("USAGE " + m_Name + " [OPTIONS]");
+    addHelpItem("Available options:");
+    addHelpItem("\t-h, --help List options");
+    addHelpItem("\t-v, --version Output version and exit");
+    addHelpItem("\t-f, --foreground Don't fork into the background (automaticly if debug)");
+    addHelpItem("\t-dr, --droproot [username] [group] run as");
+    addHelpItem("\t-c, --config Set config file (default: " + m_IniFile + ")");
+    addHelpItem("\t-d, --debug Set debug level [1-10] (default: 5) (implies foreground)");
+    addHelpItem("\t-p, --pid Set Pid file location (default: " + m_PidFileLocation + ")");
+#ifdef USE_SYSLOG
+    addHelpItem("\t-s, --syslog Set syslog name (default: " + m_Syslog + ")");
+#endif
+#ifdef USE_FILELOG
+    addHelpItem("\t-l, --log Set log file location (default: " + m_LogFileLocation + ")");
+#endif
+    addHelpItem("\t-n, --name Set name for pid/log files (default: " + m_Name + ")");
+    addHelpItem("\t--INeedRootPowerz Requered when running as root (not needed when droproot is specified)");
+}
+
+mainbase::impl::~impl()
+{
+    remove(m_PidFile.c_str());
+}
+
+
+void mainbase::impl::setupSignal()
 {
     struct sigaction new_action;
     struct sigaction old_action;
@@ -248,219 +359,7 @@ void mainbase::SetupSignal()
 
 }
 
-
-mainbase::mainbase(std::string name) :
-m_INeedRoot(false),
-m_DropRoot(false),
-m_Foreground(false)
-{
-    m_Name = name;
-    m_Syslog = m_Name;
-#ifdef USE_FILELOG
-    m_LogFileLocation = "log/";
-    m_LogFile = m_LogFileLocation + m_Name + ".log";
-#endif
-    m_PidFileLocation = "/var/run/" + m_Name + "/";
-    m_PidFile = m_PidFileLocation + m_Name + ".pid";
-    m_IniFile = "conf/" + m_Name + ".ini";
-    SetupSignal();
-    versions::instance().addVersion("Copyright \xa9 2012 Gijs Kwakkel");
-    versions::instance().addVersion("GNU Version 2");
-    versions::instance().addVersion(gNAME + " " + gVERSION + " " + gGITVERSION);
-    addHelpItem("Runs the " + m_Name +
-        " (default as " + m_Name +
-        ", " + m_PidFile +
-#ifdef USE_FILELOG
-        ", " + m_LogFile +
-#endif
-        ", " + m_IniFile +
-        ")");
-    addHelpItem("USAGE " + m_Name + " [OPTIONS]");
-    addHelpItem("Available options:");
-    addHelpItem("\t-h, --help List options");
-    addHelpItem("\t-v, --version Output version and exit");
-    addHelpItem("\t-f, --foreground Don't fork into the background (automaticly if debug)");
-    addHelpItem("\t-dr, --droproot [username] [group] run as");
-    addHelpItem("\t-c, --config Set config file (default: " + m_IniFile + ")");
-    addHelpItem("\t-d, --debug Set debug level [1-10] (default: 5) (implies foreground)");
-    addHelpItem("\t-p, --pid Set Pid file location (default: " + m_PidFileLocation + ")");
-#ifdef USE_SYSLOG
-    addHelpItem("\t-s, --syslog Set syslog name (default: " + m_Syslog + ")");
-#endif
-#ifdef USE_FILELOG
-    addHelpItem("\t-l, --log Set log file location (default: " + m_LogFileLocation + ")");
-#endif
-    addHelpItem("\t-n, --name Set name for pid/log files (default: " + m_Name + ")");
-    addHelpItem("\t--INeedRootPowerz Requered when running as root (not needed when droproot is specified)");
-}
-
-mainbase::~mainbase()
-{
-    remove(m_PidFile.c_str());
-}
-
-void mainbase::parseArgs(std::vector<std::string> args)
-{
-    m_Argv = args;
-    for (size_t nArg = 0; nArg < args.size(); nArg++)
-    {
-        if (args[nArg] == "--help" || args[nArg] == "-h")
-        {
-            showHelp();
-            exit(EXIT_SUCCESS);
-        }
-        else if (args[nArg] == "--version" || args[nArg] == "-v")
-        {
-            versions::instance().showVersion();
-            exit(EXIT_SUCCESS);
-        }
-        else if (args[nArg] == "--foreground" || args[nArg] == "-f")
-        {
-            m_Foreground = true;
-        }
-        else if (args[nArg] == "--droproot" || args[nArg] == "-dr")
-        {
-            if ((++nArg) < args.size())
-            {
-                if ((++nArg) < args.size())
-                {
-                    m_Uid = args[nArg-1];
-                    m_Gid = args[nArg];
-                    m_DropRoot = true;
-                }
-            }
-        }
-        else if (args[nArg] == "--config" || args[nArg] == "-c")
-        {
-            if ((++nArg) < args.size())
-            {
-                m_IniFile = args[nArg];
-            }
-        }
-        else if (args[nArg] == "--debug" || args[nArg] == "-d")
-        {
-            if ((++nArg) < args.size())
-            {
-                int i;
-                std::stringstream ss(args[nArg]);
-                ss >> i;
-                output::instance().setDebugLevel(i);
-                m_Foreground = true;
-            }
-        }
-        else if (args[nArg] == "--pid" || args[nArg] == "-p")
-        {
-            if ((++nArg) < args.size())
-            {
-                m_PidFileLocation = args[nArg];
-            }
-        }
-#ifdef USE_SYSLOG
-        else if (args[nArg] == "--syslog" || args[nArg] == "-s")
-        {
-            if ((++nArg) < args.size())
-            {
-                m_Syslog = args[nArg];
-            }
-        }
-#endif
-#ifdef USE_FILELOG
-        else if (args[nArg] == "--log" || args[nArg] == "-l")
-        {
-            if ((++nArg) < args.size())
-            {
-                m_LogFileLocation = args[nArg];
-            }
-        }
-#endif
-        else if (args[nArg] == "--name" || args[nArg] == "-n")
-        {
-            if ((++nArg) < args.size())
-            {
-                m_Name = args[nArg];
-            }
-        }
-        else if (args[nArg] == "--INeedRootPowerz")
-        {
-            m_INeedRoot = true;
-        }
-    }
-}
-
-int mainbase::run()
-{
-    m_PidFile = m_PidFileLocation + m_Name + ".pid";
-#ifdef USE_FILELOG
-    m_LogFile = m_LogFileLocation + m_Name + ".log";
-#endif
-    if (readPidFile())
-    {
-        return 1;
-    }
-#ifdef USE_FILELOG
-    createDirectory(m_LogFileLocation);
-#endif
-    createDirectory(m_PidFileLocation);
-    if (isRoot() && !m_DropRoot)
-    {
-        output::instance().addOutput("You are running " + m_Name + "as root!", 4);
-        output::instance().addOutput("This is dangerouse and can cause great damage!", 4);
-        if (!m_INeedRoot) {
-            return 1;
-        }
-        output::instance().addOutput("You have been warned", 4);
-        output::instance().addOutput("Hit CTRL+C now if you don't want to run " + m_Name + " as root.", 4);
-        output::instance().addOutput(m_Name + " will start in 15 seconds.", 4);
-        sleep(15);
-    }
-    if (m_DropRoot)
-    {
-        output::instance().addOutput("dropping root", 2);
-        if (!dropRoot())
-        {
-            return 1;
-        }
-    }
-    int DaemonizeStatus = daemonize(!m_Foreground);
-    if (DaemonizeStatus != -1)
-    {
-        return DaemonizeStatus;
-    }
-#ifdef USE_FILELOG
-    output::instance().setLogFile(m_LogFile);
-#endif
-    output::instance().setSyslog(m_Syslog);
-    output::instance().openLog();
-    std::string startBlock = "+++++++++++++++++++++++++++++++++";
-    for (size_t m_Name_Iterator = 0; m_Name_Iterator < m_Name.size(); m_Name_Iterator++)
-    {
-        startBlock = startBlock + "+";
-    }
-    output::instance().addOutput(startBlock, 2);
-    output::instance().addOutput("+ Start " + m_Name + " on " + output::instance().sFormatTime("%d-%m-%Y %H:%M:%S") + " +", 2);
-    output::instance().addOutput(startBlock, 2);
-    std::string argvstring = "";
-    for (size_t argvIterator = 0; argvIterator < m_Argv.size(); argvIterator++)
-    {
-        argvstring += m_Argv[argvIterator] + " ";
-    }
-    output::instance().addOutput(argvstring, 2);
-    versions::instance().showVersion();
-    configreader::instance().set_ConfigFile(m_IniFile);
-    if(!configreader::instance().readFile())
-    {
-        return 1;
-    }
-    struct timespec req, rem;
-    req.tv_sec = 2;
-    req.tv_nsec = 0;
-    rem.tv_sec = 0;
-    rem.tv_nsec = 0;
-    nanosleep(&req, &rem);
-    return -1;
-}
-
-bool mainbase::createDirectory(std::string directory)
+bool mainbase::impl::createDirectory(std::string directory)
 {
     struct stat sb;
     if (stat(directory.c_str(), &sb) != 0)
@@ -481,7 +380,7 @@ bool mainbase::createDirectory(std::string directory)
     return true;
 }
 
-bool mainbase::readPidFile()
+bool mainbase::impl::readPidFile()
 {
     std::string sPid = "-2";
     int iFilePid = -2;
@@ -509,7 +408,7 @@ bool mainbase::readPidFile()
     // end check
 }
 
-void mainbase::writePidFile(int Pid)
+void mainbase::impl::writePidFile(int Pid)
 {
     // write current pid to pidfile
     if (Pid < 0) {
@@ -532,7 +431,7 @@ void mainbase::writePidFile(int Pid)
     // end writing pid file
 }
 
-bool mainbase::isRoot()
+bool mainbase::impl::isRoot()
 {
 #if defined(linux) || defined(__linux) || defined(__linux__)
     // User root? If one of these were root, we could switch the others to root, too
@@ -551,7 +450,7 @@ bool mainbase::isRoot()
 #endif
 }
 
-bool mainbase::dropRoot()
+bool mainbase::impl::dropRoot()
 {
     struct passwd pwd;
     struct passwd *pwdresult;
@@ -658,20 +557,7 @@ bool mainbase::dropRoot()
     return false;
 }
 
-void mainbase::showHelp()
-{
-    for (size_t HelpItems_iterator = 0; HelpItems_iterator < m_HelpItems.size(); HelpItems_iterator++)
-    {
-        output::instance().addOutput(m_HelpItems[HelpItems_iterator]);
-    }
-}
-
-void mainbase::addHelpItem(std::string HelpItem)
-{
-    m_HelpItems.push_back(HelpItem);
-}
-
-int mainbase::daemonize(bool Daemonize)
+int mainbase::impl::daemonize(bool Daemonize)
 {
     if (!Daemonize)
     {
@@ -711,3 +597,209 @@ int mainbase::daemonize(bool Daemonize)
     }
     return -1;
 }
+
+void mainbase::impl::parseArgs(std::vector<std::string> args)
+{
+    m_Argv = args;
+    for (size_t nArg = 0; nArg < args.size(); nArg++)
+    {
+        if (args[nArg] == "--help" || args[nArg] == "-h")
+        {
+            showHelp();
+            exit(EXIT_SUCCESS);
+        }
+        else if (args[nArg] == "--version" || args[nArg] == "-v")
+        {
+            versions::instance().showVersion();
+            exit(EXIT_SUCCESS);
+        }
+        else if (args[nArg] == "--foreground" || args[nArg] == "-f")
+        {
+            m_Foreground = true;
+        }
+        else if (args[nArg] == "--droproot" || args[nArg] == "-dr")
+        {
+            if ((++nArg) < args.size())
+            {
+                if ((++nArg) < args.size())
+                {
+                    m_Uid = args[nArg-1];
+                    m_Gid = args[nArg];
+                    m_DropRoot = true;
+                }
+            }
+        }
+        else if (args[nArg] == "--config" || args[nArg] == "-c")
+        {
+            if ((++nArg) < args.size())
+            {
+                m_IniFile = args[nArg];
+            }
+        }
+        else if (args[nArg] == "--debug" || args[nArg] == "-d")
+        {
+            if ((++nArg) < args.size())
+            {
+                int i;
+                std::stringstream ss(args[nArg]);
+                ss >> i;
+                output::instance().setDebugLevel(i);
+                m_Foreground = true;
+            }
+        }
+        else if (args[nArg] == "--pid" || args[nArg] == "-p")
+        {
+            if ((++nArg) < args.size())
+            {
+                m_PidFileLocation = args[nArg];
+            }
+        }
+#ifdef USE_SYSLOG
+        else if (args[nArg] == "--syslog" || args[nArg] == "-s")
+        {
+            if ((++nArg) < args.size())
+            {
+                m_Syslog = args[nArg];
+            }
+        }
+#endif
+#ifdef USE_FILELOG
+        else if (args[nArg] == "--log" || args[nArg] == "-l")
+        {
+            if ((++nArg) < args.size())
+            {
+                m_LogFileLocation = args[nArg];
+            }
+        }
+#endif
+        else if (args[nArg] == "--name" || args[nArg] == "-n")
+        {
+            if ((++nArg) < args.size())
+            {
+                m_Name = args[nArg];
+            }
+        }
+        else if (args[nArg] == "--INeedRootPowerz")
+        {
+            m_INeedRoot = true;
+        }
+    }
+}
+
+int mainbase::impl::run()
+{
+    m_PidFile = m_PidFileLocation + m_Name + ".pid";
+#ifdef USE_FILELOG
+    m_LogFile = m_LogFileLocation + m_Name + ".log";
+#endif
+    if (readPidFile())
+    {
+        return 1;
+    }
+#ifdef USE_FILELOG
+    createDirectory(m_LogFileLocation);
+#endif
+    createDirectory(m_PidFileLocation);
+    if (isRoot() && !m_DropRoot)
+    {
+        output::instance().addOutput("You are running " + m_Name + "as root!", 4);
+        output::instance().addOutput("This is dangerouse and can cause great damage!", 4);
+        if (!m_INeedRoot) {
+            return 1;
+        }
+        output::instance().addOutput("You have been warned", 4);
+        output::instance().addOutput("Hit CTRL+C now if you don't want to run " + m_Name + " as root.", 4);
+        output::instance().addOutput(m_Name + " will start in 15 seconds.", 4);
+        sleep(15);
+    }
+    if (m_DropRoot)
+    {
+        output::instance().addOutput("dropping root", 2);
+        if (!dropRoot())
+        {
+            return 1;
+        }
+    }
+    int DaemonizeStatus = daemonize(!m_Foreground);
+    if (DaemonizeStatus != -1)
+    {
+        return DaemonizeStatus;
+    }
+#ifdef USE_FILELOG
+    output::instance().setLogFile(m_LogFile);
+#endif
+    output::instance().setSyslog(m_Syslog);
+    output::instance().openLog();
+    std::string startBlock = "+++++++++++++++++++++++++++++++++";
+    for (size_t m_Name_Iterator = 0; m_Name_Iterator < m_Name.size(); m_Name_Iterator++)
+    {
+        startBlock = startBlock + "+";
+    }
+    output::instance().addOutput(startBlock, 2);
+    output::instance().addOutput("+ Start " + m_Name + " on " + output::instance().sFormatTime("%d-%m-%Y %H:%M:%S") + " +", 2);
+    output::instance().addOutput(startBlock, 2);
+    std::string argvstring = "";
+    for (size_t argvIterator = 0; argvIterator < m_Argv.size(); argvIterator++)
+    {
+        argvstring += m_Argv[argvIterator] + " ";
+    }
+    output::instance().addOutput(argvstring, 2);
+    versions::instance().showVersion();
+    configreader::instance().set_ConfigFile(m_IniFile);
+    if(!configreader::instance().readFile())
+    {
+        return 1;
+    }
+    struct timespec req, rem;
+    req.tv_sec = 2;
+    req.tv_nsec = 0;
+    rem.tv_sec = 0;
+    rem.tv_nsec = 0;
+    nanosleep(&req, &rem);
+    return -1;
+}
+
+void mainbase::impl::showHelp()
+{
+    for (size_t HelpItems_iterator = 0; HelpItems_iterator < m_HelpItems.size(); HelpItems_iterator++)
+    {
+        output::instance().addOutput(m_HelpItems[HelpItems_iterator]);
+    }
+}
+
+void mainbase::impl::addHelpItem(std::string helpItem)
+{
+    m_HelpItems.push_back(helpItem);
+}
+// ### end mainbase implementation ###
+
+// ### mainbase public ###
+mainbase::mainbase(std::string name) : pimpl{ new impl(name) }
+{
+}
+
+mainbase::~mainbase()
+{
+}
+
+
+void mainbase::parseArgs(std::vector<std::string> args)
+{
+    pimpl->parseArgs(args);
+}
+
+int mainbase::run()
+{
+    return pimpl->run();
+}
+
+void mainbase::showHelp()
+{
+    pimpl->showHelp();
+}
+
+void mainbase::addHelpItem(std::string helpItem)
+{
+    pimpl->addHelpItem(helpItem);
+}
+// ### end mainbase public ###
