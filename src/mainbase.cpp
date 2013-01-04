@@ -49,11 +49,6 @@
 #include <pwd.h>
 
 
-//void gdb_sighandler(int i_num, siginfo_t * i_info, void * i_val);
-//void SegFaultAction(int i_num, siginfo_t * i_info, void * i_val);
-//void TermAction(int i_num, siginfo_t * i_info, void * i_val);
-//void Usr1Action(int i_num, siginfo_t * i_info, void * i_val);
-
 extern "C" void libgframe_is_present(void)
 {
 }
@@ -136,6 +131,12 @@ void SegFaultAction(int i_num, siginfo_t * i_info, void * i_val)
     output::instance().addOutput("si_fd:      " + glib::stringFromInt(i_info->si_fd) + "    = File descriptor", 4);
 #endif
 
+    struct timespec req, rem;
+    req.tv_sec = 1;
+    req.tv_nsec = 0;
+    rem.tv_sec = 0;
+    rem.tv_nsec = 0;
+    nanosleep(&req, &rem);
     throw * i_info;
 }
 
@@ -159,6 +160,13 @@ void TermAction(int i_num, siginfo_t * i_info, void * i_val)
     output::instance().addOutput("si_int:     " + glib::stringFromInt(i_info->si_int) + "    = POSIX.1b signal", 4);
     output::instance().addOutput("si_ptr:     " + ssi_ptr + "    = POSIX.1b signal", 4);
 #endif
+    struct timespec req, rem;
+    req.tv_sec = 1;
+    req.tv_nsec = 0;
+    rem.tv_sec = 0;
+    rem.tv_nsec = 0;
+    nanosleep(&req, &rem);
+
     throw * i_info;
 }
 
@@ -221,7 +229,6 @@ class mainbase::impl
         void showHelp();
         void addHelpItem(std::string helpItem);
 
-        bool m_Forever;
         bool m_INeedRoot;
         bool m_DropRoot;
         bool m_Foreground;
@@ -284,6 +291,7 @@ m_Foreground(false)
 
 mainbase::impl::~impl()
 {
+    output::instance().addOutput("mainbase::impl::~impl()", 3);
     remove(m_PidFile.c_str());
 }
 
@@ -453,13 +461,15 @@ bool mainbase::impl::isRoot()
 bool mainbase::impl::dropRoot()
 {
     struct passwd pwd;
-    struct passwd *pwdresult;
+    struct passwd* pwdresult;
     struct group grp;
-    struct group *grpresult;
-    char *pwdbuf;
-    char *grpbuf;
+    struct group* grpresult;
+
+    char* pwdbuf;
+    char* grpbuf;
     size_t pwdbufsize;
     size_t grpbufsize;
+
     int pwdstatus;
     int grpstatus;
     long int pwsizemax;
@@ -494,6 +504,7 @@ bool mainbase::impl::dropRoot()
     }
 
     pwdstatus = getpwnam_r(m_Uid.c_str(), &pwd, pwdbuf, pwdbufsize, &pwdresult);
+    free(pwdbuf);
     if ( pwdresult == NULL )
     {
         if ( pwdstatus == 0 )
@@ -508,6 +519,7 @@ bool mainbase::impl::dropRoot()
     }
 
     grpstatus = getgrnam_r(m_Gid.c_str(), &grp, grpbuf, grpbufsize, &grpresult);
+    free(grpbuf);
     if ( grpresult == NULL )
     {
         if ( grpstatus == 0 )
@@ -780,6 +792,7 @@ mainbase::mainbase(std::string name) : pimpl{ new impl(name) }
 
 mainbase::~mainbase()
 {
+    output::instance().addOutput("mainbase::~mainbase()", 3);
 }
 
 

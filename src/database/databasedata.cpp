@@ -357,6 +357,11 @@ void databasedata::query_run()
         {
             m_SqlAvailable.wait(lock1);
         }
+        if (!a_Run)
+        {
+            lock1.unlock();
+            return;
+        }
         while (!m_db->connected())
         {
             output::instance().addOutput("databasedata::query_run open connection", 10);
