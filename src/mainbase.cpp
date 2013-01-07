@@ -238,7 +238,7 @@ class mainbase::impl
         std::string m_Syslog;
         std::string m_LogFileLocation;
         std::string m_PidFileLocation;
-        std::string m_IniFile;
+        std::string m_ConfFile;
         std::string m_PidFile;
         std::string m_LogFile;
         std::vector< std::string > m_HelpItems;
@@ -247,17 +247,23 @@ class mainbase::impl
 mainbase::impl::impl(std::string name) :
 m_INeedRoot(false),
 m_DropRoot(false),
-m_Foreground(false)
+m_Foreground(false),
+m_Uid(""),
+m_Gid(""),
+m_Name(name),
+m_Syslog(""),
+m_LogFileLocation("log/"),
+m_PidFileLocation("/var/run/" + m_Name + "/"),
+m_ConfFile(""),
+m_PidFile(m_PidFileLocation + m_Name + ".pid"),
+m_LogFile("")
 {
-    m_Name = name;
+#ifdef USE_SYSLOG
     m_Syslog = m_Name;
+#endif
 #ifdef USE_FILELOG
-    m_LogFileLocation = "log/";
     m_LogFile = m_LogFileLocation + m_Name + ".log";
 #endif
-    m_PidFileLocation = "/var/run/" + m_Name + "/";
-    m_PidFile = m_PidFileLocation + m_Name + ".pid";
-    m_IniFile = "conf/" + m_Name + ".ini";
     setupSignal();
     auto now = std::chrono::system_clock::now();
     std::time_t now_c = std::chrono::system_clock::to_time_t(now);
@@ -271,7 +277,6 @@ m_Foreground(false)
 #ifdef USE_FILELOG
         ", " + m_LogFile +
 #endif
-        ", " + m_IniFile +
         ")");
     addHelpItem("USAGE " + m_Name + " [OPTIONS]");
     addHelpItem("Available options:");
@@ -279,7 +284,7 @@ m_Foreground(false)
     addHelpItem("\t-v, --version Output version and exit");
     addHelpItem("\t-f, --foreground Don't fork into the background (automaticly if debug)");
     addHelpItem("\t-dr, --droproot [username] [group] run as");
-    addHelpItem("\t-c, --config Set config file (default: " + m_IniFile + ")");
+    addHelpItem("\t-c, --config Set config file");
     addHelpItem("\t-d, --debug Set debug level [1-10] (default: 5) (implies foreground)");
     addHelpItem("\t-p, --pid Set Pid file location (default: " + m_PidFileLocation + ")");
 #ifdef USE_SYSLOG
@@ -648,7 +653,7 @@ void mainbase::impl::parseArgs(std::vector<std::string> args)
         {
             if ((++nArg) < args.size())
             {
-                m_IniFile = args[nArg];
+                m_ConfFile = args[nArg];
             }
         }
         else if (args[nArg] == "--debug" || args[nArg] == "-d")
@@ -760,10 +765,13 @@ int mainbase::impl::run()
     }
     output::instance().addOutput(argvstring, 2);
     versions::instance().showVersion();
-    configreader::instance().set_ConfigFile(m_IniFile);
-    if(!configreader::instance().readFile())
+    if (m_ConfFile != "")
     {
-        return 1;
+        configreader::instance().set_ConfigFile(m_ConfFile);
+        if(!configreader::instance().readFile())
+        {
+            return 1;
+        }
     }
     struct timespec req, rem;
     req.tv_sec = 2;
