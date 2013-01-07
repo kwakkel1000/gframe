@@ -767,7 +767,7 @@ int mainbase::impl::run()
     versions::instance().showVersion();
     if (m_ConfFile != "")
     {
-        configreader::instance().set_ConfigFile(m_ConfFile);
+        configreader::instance().setConfigFile(m_ConfFile);
         if(!configreader::instance().readFile())
         {
             return 1;

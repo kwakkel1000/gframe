@@ -37,19 +37,19 @@ class configreader
             return obj;
         }
 
-        void set_ConfigFile(std::string _ConfigFile);
-        std::string get_ConfigFile();
+        void setConfigFile(std::string configFile);
+        std::string getConfigFile();
 
         void clearSettings();
         bool readFile();
-        bool readFile(std::string _ConfigFile);
+        bool readFile(std::string configFile);
         std::string getString(std::string varname);
 
     private:
         configreader();
         ~configreader();
         std::string m_ConfigFile;
-        std::map< std::string, std::string > settings;
+        std::map< std::string, std::string > m_Settings;
 };
 
 #endif // SRC_INCLUDE_CONFIGREADER_H

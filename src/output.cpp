@@ -106,16 +106,19 @@ std::string output::addOutput(std::string sOutput, int iLevel)
 {
     std::lock_guard<std::mutex> outputlock(m_outputMutex);
     std::string outputString = "";
-#ifdef USE_SYSLOG
-    appendLog("[ ** ] " + sOutput, iLevel);
-#endif
-#ifdef USE_SYSLOG
-    appendSyslog("[ ** ] " + sOutput, iLevel);
-#endif
-    if (iLevel <= iOutputLevel)
+    if (sOutput != "")
     {
-        outputString = "\033[1m\033[34m[\033[33m ** \033[34m] [\033[32m" + glib::stringFromInt(iLevel) + "\033[34m] \033[0m" + sOutput;
-        std::cout << outputString << std::endl;
+#ifdef USE_SYSLOG
+        appendLog("[ ** ] " + sOutput, iLevel);
+#endif
+#ifdef USE_SYSLOG
+        appendSyslog("[ ** ] " + sOutput, iLevel);
+#endif
+        if (iLevel <= iOutputLevel)
+        {
+            outputString = "\033[1m\033[34m[\033[33m ** \033[34m] [\033[32m" + glib::stringFromInt(iLevel) + "\033[34m] \033[0m" + sOutput;
+            std::cout << outputString << std::endl;
+        }
     }
     return outputString;
 }
@@ -161,9 +164,13 @@ void output::appendSyslog(std::string sOutput, int iLevel)
             default:
                 facility = LOG_DEBUG;
         }
-        if (iLevel <= iLogLevel)
+        if (sOutput != "")
         {
-            syslog(facility, sOutput.c_str());
+            if (iLevel <= iLogLevel)
+            {
+// escape % and other (f)printf special characters
+                syslog(facility, sOutput.c_str());
+            }
         }
     }
 #endif

@@ -30,7 +30,9 @@
 #include <string>
 #include <fstream>
 
-configreader::configreader()
+configreader::configreader() :
+m_ConfigFile(""),
+m_Settings()
 {
     clearSettings();
 }
@@ -42,14 +44,14 @@ configreader::~configreader()
 
 void configreader::clearSettings()
 {
-    settings.clear();
+    m_Settings.clear();
 }
 
-void configreader::set_ConfigFile(std::string _ConfigFile)
+void configreader::setConfigFile(std::string configFile)
 {
-    m_ConfigFile = _ConfigFile;
+    m_ConfigFile = configFile;
 }
-std::string configreader::get_ConfigFile()
+std::string configreader::getConfigFile()
 {
     return m_ConfigFile;
 }
@@ -59,13 +61,13 @@ bool configreader::readFile()
 {
     return readFile(m_ConfigFile);
 }
-bool configreader::readFile(std::string _ConfigFile)
+bool configreader::readFile(std::string configFile)
 {
-    output::instance().addOutput("readfile: " +  _ConfigFile);
+    output::instance().addOutput("readfile: " + configFile);
     std::string line;
     std::string section("global"); // default value
     std::ifstream configfile;
-    configfile.open(_ConfigFile.c_str());
+    configfile.open(configFile.c_str());
     if (configfile.is_open())
     {
         int linenr = 0;
@@ -118,19 +120,19 @@ bool configreader::readFile(std::string _ConfigFile)
                             // cout << "* The variable '" << var << "' has value '" << value << "'" << endl;
                             // convert var to lower;
                             std::transform(var.begin(), var.end(), var.begin(), (int(*)(int)) std::tolower);
-                            settings[var] = value;
+                            m_Settings[var] = value;
                         }
                     }
                 }
             }
         }
         configfile.close();
-        output::instance().addStatus(true, "done reading: " + _ConfigFile);
+        output::instance().addStatus(true, "done reading: " + configFile);
         return true;
     }
     else
     {
-        output::instance().addStatus(false, "Could not open file: " + _ConfigFile);
+        output::instance().addStatus(false, "Could not open file: " + configFile);
     }
 
     return false;
@@ -139,8 +141,16 @@ bool configreader::readFile(std::string _ConfigFile)
 
 std::string configreader::getString(std::string varname)
 {
-    // values are saved lowercase, so convert varname to lower first.
-    std::transform(varname.begin(), varname.end(), varname.begin(), (int(*)(int)) std::tolower);
-    return settings[varname];
+    if (m_ConfigFile != "")
+    {
+        // values are saved lowercase, so convert varname to lower first.
+        std::transform(varname.begin(), varname.end(), varname.begin(), (int(*)(int)) std::tolower);
+        return m_Settings[varname];
+    }
+    else
+    {
+        output::instance().addStatus(false, "No config file set, so no data  configreader::getString");
+        exit(EXIT_FAILURE);
+    }
 }
 
