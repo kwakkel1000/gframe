@@ -67,7 +67,8 @@ int tcpsocket::recv ( std::string& data ) const
 
     // Keep reading up to a '\r' or '\n'
     char c = '\0';
-    while ( (c != '\n') && (c != '\r') && (length < buffersize))
+    //while ( (c != '\n') && (c != '\r') && (length < buffersize))
+    while ( (c != '\n') && (length < buffersize))
     {
         status = ::recv(m_Sock, &c, sizeof(char), 0);
         output::instance().addOutput("status: " + glib::stringFromInt(status)  + " c: " + std::string(&c), 15);
