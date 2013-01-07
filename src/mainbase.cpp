@@ -259,7 +259,10 @@ m_Foreground(false)
     m_PidFile = m_PidFileLocation + m_Name + ".pid";
     m_IniFile = "conf/" + m_Name + ".ini";
     setupSignal();
-    versions::instance().addVersion("Copyright \xa9 2012 Gijs Kwakkel");
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+    struct tm *parts = std::localtime(&now_c);
+    versions::instance().addVersion("Copyright \xa9 2011 - " + glib::stringFromInt(1900 + parts->tm_year) +  " Gijs Kwakkel");
     versions::instance().addVersion("GNU Version 2");
     versions::instance().addVersion(gNAME + " " + gVERSION + " " + gGITVERSION);
     addHelpItem("Runs the " + m_Name +

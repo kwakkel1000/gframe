@@ -327,7 +327,8 @@ std::vector< std::vector< std::string > > databasedata::raw_sql(std::string quer
     }
     else
     {
-        //Output::Instance().addStatus(false, "DB Fail [" + convertInt(state) + "] " + mHostName + " " + mDatabaseName + " " + mUserName);
+        output::instance().addStatus(false, "raw_sql DB Fail [" + glib::stringFromInt(state) + "] " + m_HostName + " " + m_DatabaseName + " " + m_UserName);
+        std::this_thread::sleep_for( std::chrono::seconds(1) );
     }
     if (sql_queue.empty() && a_Run)
     {
@@ -404,6 +405,11 @@ void databasedata::query_run()
                     m_CounterAvailableCondition.notify_one();
                 }
             }
+        }
+        else
+        {
+            output::instance().addStatus(false, "query_run DB Fail [" + glib::stringFromInt(state) + "] " + m_HostName + " " + m_DatabaseName + " " + m_UserName);
+            std::this_thread::sleep_for( std::chrono::seconds(1) );
         }
         lock1.unlock();
     }
