@@ -44,11 +44,13 @@ configreader::~configreader()
 
 void configreader::clearSettings()
 {
+    std::lock_guard< std::mutex > lock(m_SettingsMutex);
     m_Settings.clear();
 }
 
 void configreader::setConfigFile(std::string configFile)
 {
+    std::lock_guard< std::mutex > lock(m_SettingsMutex);
     m_ConfigFile = configFile;
 }
 std::string configreader::getConfigFile()
@@ -120,6 +122,7 @@ bool configreader::readFile(std::string configFile)
                             // cout << "* The variable '" << var << "' has value '" << value << "'" << endl;
                             // convert var to lower;
                             std::transform(var.begin(), var.end(), var.begin(), (int(*)(int)) std::tolower);
+                            std::lock_guard< std::mutex > lock(m_SettingsMutex);
                             m_Settings[var] = value;
                         }
                     }
@@ -145,6 +148,7 @@ std::string configreader::getString(std::string varname)
     {
         // values are saved lowercase, so convert varname to lower first.
         std::transform(varname.begin(), varname.end(), varname.begin(), (int(*)(int)) std::tolower);
+        std::lock_guard< std::mutex > lock(m_SettingsMutex);
         return m_Settings[varname];
     }
     else

@@ -25,6 +25,7 @@
 #ifndef SRC_INCLUDE_CONFIGREADER_H
 #define SRC_INCLUDE_CONFIGREADER_H
 
+#include <mutex>
 #include <string>
 #include <map>
 
@@ -50,6 +51,7 @@ class configreader
         ~configreader();
         std::string m_ConfigFile;
         std::map< std::string, std::string > m_Settings;
+        std::mutex m_SettingsMutex;
 };
 
 #endif // SRC_INCLUDE_CONFIGREADER_H
