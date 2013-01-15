@@ -93,11 +93,12 @@ bool mysqldatabase::disconnect()
 
     sock = NULL;
 
+    // we dont use result anymore
     // release result data
-    if (result)
-    {
-        mysql_free_result(result);
-    }
+    //if (result)
+    //{
+    //    mysql_free_result(result);
+    //}
     //free();
 
     // database disconnected
