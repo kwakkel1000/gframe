@@ -45,7 +45,11 @@ databasedata::~databasedata()
     m_QueryThread->join();
     output::instance().addOutput("databasedata::~databasedata  m_CounterThread->join();", 10);
     m_CounterThread->join();
-    delete m_db;
+    // singleton so removal is only "nice" but seems to bug now.
+    //if (m_db)
+    //{
+    //    delete m_db;
+    //}
     output::instance().addOutput("databasedata::~databasedata  done", 10);
 }
 
