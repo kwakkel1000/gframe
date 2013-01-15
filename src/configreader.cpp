@@ -50,7 +50,6 @@ void configreader::clearSettings()
 
 void configreader::setConfigFile(std::string configFile)
 {
-    std::lock_guard< std::mutex > lock(m_SettingsMutex);
     m_ConfigFile = configFile;
 }
 std::string configreader::getConfigFile()
@@ -137,7 +136,6 @@ bool configreader::readFile(std::string configFile)
     {
         output::instance().addStatus(false, "Could not open file: " + configFile);
     }
-
     return false;
 }
 
@@ -148,8 +146,10 @@ std::string configreader::getString(std::string varname)
     {
         // values are saved lowercase, so convert varname to lower first.
         std::transform(varname.begin(), varname.end(), varname.begin(), (int(*)(int)) std::tolower);
-        std::lock_guard< std::mutex > lock(m_SettingsMutex);
-        return m_Settings[varname];
+        std::unique_lock< std::mutex > lock(m_SettingsMutex);
+        std::string l_Return = m_Settings[varname];
+        lock.unlock();
+        return l_Return;
     }
     else
     {
