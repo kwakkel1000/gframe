@@ -52,7 +52,7 @@ class mysqldatabase : public database
         bool set(const char *query); // updates, returns true if update went through
         std::vector< std::vector< std::string> > get(const char* query);
         // free the query results
-        //bool free();
+        bool free();
 
     private:
         MYSQL *sock;

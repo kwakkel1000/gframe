@@ -93,13 +93,7 @@ bool mysqldatabase::disconnect()
 
     sock = NULL;
 
-    // we dont use result anymore
-    // release result data
-    //if (result)
-    //{
-    //    mysql_free_result(result);
-    //}
-    //free();
+    free();
 
     // database disconnected
     return true;
@@ -123,16 +117,17 @@ bool mysqldatabase::connected()
 * Precondition: none
 * Postcondition: results no longer there
 **************/
-/*bool mysqldatabase::free()
+bool mysqldatabase::free()
 {
-    if (result)
+    if (result != NULL)
     {
         mysql_free_result(result);
+        result = NULL;
         return true;
     }
 
     return false;
-}*/
+}
 
 /**************
 * Purpose: return the approprite error message
